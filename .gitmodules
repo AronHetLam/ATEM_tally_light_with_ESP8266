@@ -1,6 +1,0 @@
-[submodule "libraries/ATEMbase"]
-	path = libraries/ATEMbase
-	url = https://github.com/kasperskaarhoj/SKAARHOJ-Open-Engineering/tree/master/ArduinoLibs/ATEMbase
-[submodule "libraries/ATEMmin"]
-	path = libraries/ATEMmin
-	url = https://github.com/kasperskaarhoj/SKAARHOJ-Open-Engineering/tree/master/ArduinoLibs/ATEMmin

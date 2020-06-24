@@ -15,11 +15,11 @@ GREEN | Tally preview
 OFF | Tally neither live or preview (or no power...)
 
 # Use Arduino IDE with ESP8266 module
-See details at [ESP8266] (https://github.com/esp8266/Arduino) on how to setup and use ESP8266 modules like a regular Arduino board.
+See details at [ESP8266](https://github.com/esp8266/Arduino) on how to setup and use ESP8266 modules like a regular Arduino board.
 They have links for further documentation as well.
 
 # Credits
-Based on ATEM libraries for Arduino from [SKAARHOJ] (https://www.skaarhoj.com/)
-Git repo: [SKAARHOJ-Open-Engineering] (https://github.com/kasperskaarhoj/SKAARHOJ-Open-Engineering)
+Based on ATEM libraries for Arduino from [SKAARHOJ](https://www.skaarhoj.com/)
+Git repo: [SKAARHOJ-Open-Engineering](https://github.com/kasperskaarhoj/SKAARHOJ-Open-Engineering)
 
-Inspired by [ATEM_Wireless_Tally_Light] (https://github.com/kalinchuk/ATEM_Wireless_Tally_Light) (However, this works completely different)
+Inspired by [ATEM_Wireless_Tally_Light](https://github.com/kalinchuk/ATEM_Wireless_Tally_Light) (However, this works completely different)

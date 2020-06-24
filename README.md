@@ -1,5 +1,5 @@
 # ATEM-tally-light
-Wireless tally light for use with ATEM switchers, which connects over WiFi, using a D1 mini board (ESP8266 WiFi module). Should easily be convertable to use with regular Arduino boards and an ESP2866 module, by changeing the include statements and a few other things (however, this is not tested).
+Wireless tally light for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED. Should easily be convertable to use with regular Arduino boards and an ESP2866 module, by changeing the include statements and a few other things (however, this is not tested).
 
 # What does it do?
 It will serve a webpage over WiFi where you are able to see status details, and perform the basic setup. Depending on if it's connecting to a known network or not it will serve the webpage on it's IP address, og on 192.168.4.1 (default) over a softAP named "Tally light setup". (On first run you might run into issues with what it reads from the EEPROM if it connects to a known WiFi, as it can set an invalid static IP. To avoid this, make sure it's unable to reconnect to an earlier known WiFi, so that it will enable a softAP).

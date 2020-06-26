@@ -1,19 +1,16 @@
-// Including libraries:
+//Include libraries:
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-//#include <ESP8266mDNS.h>
+#include <DNSServer.h>
 #include <EEPROM.h>
 #include <ATEMmin.h>
 
-#define STATE_STARTING                  0
-#define STATE_CONNECTING_TO_WIFI        1
-#define STATE_CONNECTING_TO_SWITCHER    2
-#define STATE_RUNNING                   3
-
+//Define LED color pins
 #define PIN_RED     D0
 #define PIN_GREEN   D2
 #define PIN_BLUE    D1
 
+//Define LED colors
 #define LED_OFF     0
 #define LED_RED     1
 #define LED_GREEN   2
@@ -22,16 +19,33 @@
 #define LED_PINK    5
 #define LED_WHITE   6
 
+//Define states
+#define STATE_STARTING                  0
+#define STATE_CONNECTING_TO_WIFI        1
+#define STATE_CONNECTING_TO_SWITCHER    2
+#define STATE_RUNNING                   3
 
+//Define modes of operation
+#define MODE_NORMAL                     1
+#define MODE_PREVIEW_STAY_ON            2
+#define MODE_PROGRAM_ONLY               3
+
+//Define DNS port
+#define DNS_PORT    53
+
+//Initialize global variables
+DNSServer dnsServer;
 ESP8266WebServer server(80);
 
 ATEMmin atemSwitcher;
 
 uint8_t state = STATE_STARTING;
 
+//Define sturct for holding tally settings (mostly to simplify EEPROM read and write, in order to persist settings)
 struct Settings {
     char tallyName[32] = "";
     uint8_t tallyNo;
+    uint8_t tallyMode;
     bool staticIP;
     IPAddress tallyIP;
     IPAddress tallySubnetMask;
@@ -43,6 +57,7 @@ Settings settings;
 
 bool firstRun = true;
 
+//Perform initial setup on power on
 void setup() {
     //Init pins for LED
     pinMode(PIN_RED, OUTPUT);
@@ -56,19 +71,24 @@ void setup() {
 
     //save flash memory from being written too without need.
     WiFi.persistent(false);
-    WiFi.mode(WIFI_STA);
 
-    // Read settings from EEPROM. Settings struct takes 68 bytes total (according to sizeOf()). WIFI settings are stored seperately by the ESP
-    EEPROM.begin(68);
+    //Put WiFi into station mode and make it outomatically connect to saved network
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoConnect(true);
+    WiFi.setAutoReconnect(true);
+
+    //Read settings from EEPROM. Settings struct takes 68 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
+    EEPROM.begin(68); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);
 
     Serial.println(settings.tallyName);
+    //Serial.println(sizeof(settings)); //Check size of settings struct
     WiFi.hostname(settings.tallyName);
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     }
 
-    // MDNS.begin("esp8266");
+    dnsServer.start(DNS_PORT, "*", IPAddress(192, 168, 4, 1));
 
     // Initialize and begin HTTP server for handeling the web interface
     server.on("/", handleRoot);
@@ -76,8 +96,8 @@ void setup() {
     server.onNotFound(handleNotFound);
     server.begin();
 
-    //Wait for result from first attempt to connect - This makes sure it only activates the softAP if it wa unable to connect,
-    // ,and not just because it hasn't had the time to do so yet. It's blocking, so don't use it inside loop()
+    //Wait for result from first attempt to connect - This makes sure it only activates the softAP if it was unable to connect,
+    //and not just because it hasn't had the time to do so yet. It's blocking, so don't use it inside loop()
     WiFi.waitForConnectResult();
 
     //Set state to connecting before entering loop
@@ -103,7 +123,7 @@ void loop() {
             // Initialize a connection to the switcher:
             if (firstRun) {
                 atemSwitcher.begin(settings.switcherIP);
-                //atemSwitcher.serialOutput(0x80);
+                //atemSwitcher.serialOutput(0x80); //Makes Atem library print debug info
                 atemSwitcher.connect();
                 firstRun = false;
             }
@@ -114,14 +134,17 @@ void loop() {
             break;
 
         case STATE_RUNNING:
-            //Handles data exchange and connection to swithcher
+            //Handle data exchange and connection to swithcher
             atemSwitcher.runLoop();
 
-            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) { //if tally live
+            //Set tally light accordingly
+            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
                 setLED(LED_RED);
-            } else if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02) { //if tally preview
+            } else if (!settings.tallyMode == MODE_PROGRAM_ONLY                                 //if not program only
+                       && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
+                           || settings.tallyMode == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
                 setLED(LED_GREEN);
-            } else { // If tally is neither
+            } else {                                                                            // If tally is neither
                 setLED(LED_OFF);
             }
 
@@ -136,6 +159,9 @@ void loop() {
             }
             break;
     }
+
+    //Handle DNS requests
+    dnsServer.processNextRequest();
 
     //Handle web interface
     server.handleClient();
@@ -201,6 +227,7 @@ void setLED(uint8_t color) {
     }
 }
 
+//Serve setup web page to client, by sending HTML with the correct variables
 void handleRoot() {
     String html = "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <script> function switchIpField(e) { console.log(\"switch\"); console.log(e); var target = e.srcElement || e.target; var maxLength = parseInt(target.attributes[\"maxlength\"].value, 10); var myLength = target.value.length; if (myLength >= maxLength) { var next = target.nextElementSibling; while (next != null) { if (next.className.includes(\"IP\")) { next.focus(); break; } next = next.nextElementSibling } } else if (myLength == 0) { var previous = target.previousElementSibling; while (previous != null) { if (previous.className.includes(\"IP\")) { previous.focus(); break; } previous = previous.previousElementSibling; } } } function ipFieldFocus(e) { console.log(\"focus\"); console.log(e); var target = e.srcElement || e.target; target.select(); } function load() { var containers = document.getElementsByClassName(\"IP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } containers = document.getElementsByClassName(\"tIP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } toggleStaticIPFields(); } function toggleStaticIPFields() { var enabled = document.getElementById(\"staticIP\").checked; document.getElementById(\"staticIPHidden\").disabled = enabled; var staticIpFields = document.getElementsByClassName('tIP'); for (var i = 0; i < staticIpFields.length; i++) { staticIpFields[i].disabled = !enabled; } } </script> <body style=\"font-family:Verdana; white-space:nowrap;\" onload=\"load()\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=color:#ffffff;font-size:12px;\"> <tr> <td> <h1>Tally Light setup</h1> </td> </tr> <tr> <td> <h2>Status:</h2> </td> </tr> </table><br> <table> <tr> <td>Connection Status:</td> <td>";
     switch (WiFi.status()) {
@@ -247,9 +274,21 @@ void handleRoot() {
         html += "Disconnected - Waiting for WiFi";
     html += "</td> </tr> <tr> <td>ATEM switcher IP:</td> <td>";
     html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];;
-    html += "</td> </tr> </table><br> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <td> <h2>Settings:</h2> </td> </tr> </table><br> <table> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td><input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tname\" value=\"";
+    html += "</td> </tr> </table><br> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <td> <h2>Settings:</h2> </td> </tr> </table><br> <table> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td><input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
     html += WiFi.hostname();
-    html += "\" required> </td> </tr> <tr> <td>Tally Light number: </td> <td><input type=\"number\" size=\"5\" min=\"1\" max=\"21\" name=\"tNo\" value=\"";
+    html += "\" required> <tr> <td>Tally Light mode: </td> <td><select name = \"tMode\"> <option value=\"";
+    html += (String) MODE_NORMAL + "\" ";
+    if (settings.tallyMode == MODE_NORMAL)
+        html += "selected";
+    html += ">Normal</option> <option value=\"";
+    html += (String) MODE_PREVIEW_STAY_ON + "\" ";
+    if (settings.tallyMode == MODE_PREVIEW_STAY_ON)
+        html += "selected";
+    html += ">Preview stay on</option> <option value=\"";
+    html += (String) MODE_PROGRAM_ONLY + "\" ";
+    if (settings.tallyMode == MODE_PROGRAM_ONLY)
+        html += "selected";
+    html += ">Program only</option> </select> </td> </tr> </td> </tr> <tr> <td>Tally Light number: </td> <td><input type=\"number\" size=\"5\" min=\"1\" max=\"21\" name=\"tNo\" value=\"";
     html += (settings.tallyNo + 1);
     html += "\" required> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Network name (SSID): </td> <td><input type=\"text\" size=\"30\" maxlength=\"30\" name=\"ssid\" value=\"";
     html += WiFi.SSID();
@@ -296,6 +335,7 @@ void handleRoot() {
     server.send(200, "text/html", html);
 }
 
+//Save new settings from client in EEPROM and restart the ESP8266 module
 void handleSave() {
     if (server.method() != HTTP_POST) {
         server.send(405, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>Request without posting settings not allowed</body></html>");
@@ -308,8 +348,10 @@ void handleSave() {
             String var = server.argName(i);
             String val = server.arg(i);
 
-            if (var ==  "tname") {
+            if (var ==  "tName") {
                 val.toCharArray(settings.tallyName, (uint8_t)32);
+            } else if (var ==  "tMode") {
+                settings.tallyMode = val.toInt();
             } else if (var ==  "tNo") {
                 settings.tallyNo = val.toInt() - 1;
             } else if (var ==  "ssid") {
@@ -359,7 +401,8 @@ void handleSave() {
 
             server.send(200, "text/html", (String)"<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"font-family:Verdana;color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>Settings saved successfully.</body></html>");
 
-            delay(1000);
+            //Delay to let data be saved, and the responce to be sent properly to the client
+            delay(5000);
 
             if (ssid && pwd && (ssid != WiFi.SSID() || pwd != WiFi.psk())) {
                 WiFi.persistent(true);
@@ -372,6 +415,7 @@ void handleSave() {
     }
 }
 
+//Send 404 to client in case of invalid webpage being requested.
 void handleNotFound() {
     server.send(404, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>404 - Page not found</body></html>");
 }

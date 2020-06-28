@@ -2,11 +2,11 @@
 Wireless tally light for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED. Should easily be convertable to use with regular Arduino boards and an ESP2866 module, by changeing the include statements and a few other things (however, this is not tested).
 
 # What does it do?
-Once setup, it will automatically connect to an ATEM swithcer over WiFi and function as a tally light.
+Once set up, it will automatically connect to an ATEM swithcer over WiFi and function as a tally light.
 
-It serves a webpage over WiFi where you are able to see status details, and perform the basic setup. Depending on if it's connecting to a known network or not it will serve the webpage on it's IP address, or on [192.168.4.1](HTTP://192.168.4.1) (default) over a softAP (access point) named "Tally light setup". (On first run you might run into issues with what it reads from the EEPROM if it connects to a known WiFi, as it can set an invalid static IP. To avoid this, make sure it's unable to reconnect to an earlier known WiFi, so that it will enable a softAP).
+Once the program is uploaded to the ESP8266 the setup is done with a webpage it serves over WiFi where you are able to see status details, and perform the basic setup. Depending on if it's connecting to a known network or not it will serve the webpage on it's IP address, or on [192.168.4.1](HTTP://192.168.4.1) (default) over a softAP (access point) named "Tally light setup". (On first run you might run into issues with what it reads from the EEPROM if it connects to a known WiFi, as it can set an invalid static IP. To avoid this, make sure it's unable to reconnect to an earlier known WiFi, so that it will enable a softAP).
 
-Once setup with the correct tallyNO and IP-addresses, it should automatically connect to the swithcer over WiFi. (IMPORTANT - Swtitcher and tally light must to be connected to the same network!)
+Once set up with the correct tallyNO and IP-addresses, it should automatically connect to the swithcer over WiFi. (IMPORTANT - Swtitcher and tally light must be connected to the same network!)
 
 The different states of connection is signalled with LED colors.
 Color | Description

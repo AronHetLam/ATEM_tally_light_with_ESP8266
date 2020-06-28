@@ -140,7 +140,7 @@ void loop() {
             //Set tally light accordingly
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
                 setLED(LED_RED);
-            } else if (!settings.tallyMode == MODE_PROGRAM_ONLY                                 //if not program only
+            } else if ((!(settings.tallyMode == MODE_PROGRAM_ONLY))                                 //if not program only
                        && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
                            || settings.tallyMode == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
                 setLED(LED_GREEN);

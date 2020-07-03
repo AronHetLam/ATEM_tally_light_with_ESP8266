@@ -26,6 +26,8 @@ Normal | As describen in the above table.
 Preview stay on | Tally will be green whenever not in program
 Program only | Tally will be off whenever not in program
 
+NOTE: Atem swithcers only allow for 5-8 simultanious clients (dependant on the model). Be mindful of this as each of these tally lights will act as a seperate client alongside eg. a computer running Atem software control.
+
 # Use Arduino IDE with ESP8266 module
 See details at [ESP8266](https://github.com/esp8266/Arduino) on how to setup and use ESP8266 modules like a regular Arduino board.
 They have links for further documentation as well.

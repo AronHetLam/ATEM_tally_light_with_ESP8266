@@ -73,8 +73,8 @@ void setup() {
     WiFi.persistent(false);
 
     //Put WiFi into station mode and make it outomatically connect to saved network
+    WiFi.begin();
     WiFi.mode(WIFI_STA);
-    WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
 
     //Read settings from EEPROM. Settings struct takes 68 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP

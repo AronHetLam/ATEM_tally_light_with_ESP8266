@@ -72,11 +72,6 @@ void setup() {
     //save flash memory from being written too without need.
     WiFi.persistent(false);
 
-    //Put WiFi into station mode and make it outomatically connect to saved network
-    WiFi.begin();
-    WiFi.mode(WIFI_STA);
-    WiFi.setAutoReconnect(true);
-
     //Read settings from EEPROM. Settings struct takes 68 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
     EEPROM.begin(68); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);
@@ -87,6 +82,11 @@ void setup() {
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     }
+
+    //Put WiFi into station mode and make it connect to saved network
+    WiFi.mode(WIFI_STA);
+    WiFi.setAutoReconnect(true);
+    WiFi.begin();
 
     dnsServer.start(DNS_PORT, "*", IPAddress(192, 168, 4, 1));
 

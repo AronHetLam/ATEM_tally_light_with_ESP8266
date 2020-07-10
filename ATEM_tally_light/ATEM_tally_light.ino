@@ -67,7 +67,8 @@ void setup() {
 
     //Start Serial
     Serial.begin(115200);
-    Serial.print("\n- - - - - - - -\nSerial Started\n");
+    Serial.println("########################");
+    Serial.println("Serial started");
 
     //save flash memory from being written too without need.
     WiFi.persistent(false);
@@ -78,15 +79,19 @@ void setup() {
 
     Serial.println(settings.tallyName);
     //Serial.println(sizeof(settings)); //Check size of settings struct
-    WiFi.hostname(settings.tallyName);
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     }
 
     //Put WiFi into station mode and make it connect to saved network
     WiFi.mode(WIFI_STA);
-    WiFi.setAutoReconnect(true);
     WiFi.begin();
+    WiFi.hostname(settings.tallyName);
+    WiFi.setAutoReconnect(true);
+
+    Serial.println("------------------------");
+    Serial.println("Connecting to WiFi...");
+    Serial.println("Network name (SSID): " + WiFi.SSID());
 
     dnsServer.start(DNS_PORT, "*", IPAddress(192, 168, 4, 1));
 
@@ -109,6 +114,11 @@ void loop() {
         case STATE_CONNECTING_TO_WIFI: {
                 if (WiFi.status() == WL_CONNECTED) {
                     WiFi.mode(WIFI_STA); // Disable softAP if connection is successful
+                    Serial.println("------------------------");
+                    Serial.println("Connected to WiFi:   " + WiFi.SSID());
+                    Serial.println("IP:                  " + WiFi.localIP().toString());
+                    Serial.println("Subnet Mask:         " + WiFi.subnetMask().toString());
+                    Serial.println("Gateway IP:          " + WiFi.gatewayIP().toString());
                     changeState(STATE_CONNECTING_TO_SWITCHER);
                 } else if (firstRun) {
                     firstRun = false;
@@ -125,11 +135,15 @@ void loop() {
                 atemSwitcher.begin(settings.switcherIP);
                 //atemSwitcher.serialOutput(0x80); //Makes Atem library print debug info
                 atemSwitcher.connect();
+                Serial.println("------------------------");
+                Serial.println("Connecting to switcher...");
+                Serial.println((String)"Switcher IP:         " + settings.switcherIP[0] + "." + settings.switcherIP[1] + "." + settings.switcherIP[2] + "." + settings.switcherIP[3]);
                 firstRun = false;
             }
             atemSwitcher.runLoop();
             if (atemSwitcher.hasInitialized()) {
                 changeState(STATE_RUNNING);
+                Serial.println("Connected to switcher");
             }
             break;
 
@@ -150,11 +164,16 @@ void loop() {
 
             //Switch state if connection is lost, dependant on which connection is lost.
             if (WiFi.status() != WL_CONNECTED) {
+                Serial.println("------------------------");
+                Serial.println("WiFi connection lost...");
                 changeState(STATE_CONNECTING_TO_WIFI);
+
                 //Force atem library to reset connection, in order for status to read correctly on website.
                 atemSwitcher.begin(settings.switcherIP);
                 atemSwitcher.connect();
             } else if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
+                Serial.println("------------------------");
+                Serial.println("Connection to Switcher lost...");
                 changeState(STATE_CONNECTING_TO_SWITCHER);
             }
             break;
@@ -168,20 +187,18 @@ void loop() {
 }
 
 void changeState(uint8_t stateToChangeTo) {
+    firstRun = true;
     switch (stateToChangeTo) {
         case STATE_CONNECTING_TO_WIFI:
             state = STATE_CONNECTING_TO_WIFI;
-            firstRun = true;
             setLED(LED_BLUE);
             break;
         case STATE_CONNECTING_TO_SWITCHER:
             state = STATE_CONNECTING_TO_SWITCHER;
-            firstRun = true;
             setLED(LED_PINK);
             break;
         case STATE_RUNNING:
             state = STATE_RUNNING;
-            firstRun = true;
             setLED(LED_GREEN);
             break;
     }
@@ -292,7 +309,7 @@ void handleRoot() {
     html += (settings.tallyNo + 1);
     html += "\" required> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Network name (SSID): </td> <td><input type=\"text\" size=\"30\" maxlength=\"30\" name=\"ssid\" value=\"";
     html += WiFi.SSID();
-    html += "\" required> </td> </tr> <tr> <td>Network password: </td> <td><input type=\"password\" size=\"30\" maxlength=\"30\" name=\"pwd\" value=\"";
+    html += "\" required> </td> </tr> <tr> <td>Network password: </td> <td><input type=\"password\" size=\"30\" maxlength=\"30\" name=\"pwd\"  pattern=\"^$|.{8,32}\" value=\"";
     if (WiFi.isConnected()) //As a minimum security meassure, to only send the wifi password if it's currently connected to the given network.
         html += WiFi.psk();
     html += "\"> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Use static IP: </td> <td> <input type=\"hidden\" id=\"staticIPHidden\" name=\"staticIP\" value=\"false\"/> <input id=\"staticIP\" type=\"checkbox\" name=\"staticIP\" value=\"true\" onchange=\"toggleStaticIPFields()\" ";

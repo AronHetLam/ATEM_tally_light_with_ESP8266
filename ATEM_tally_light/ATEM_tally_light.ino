@@ -4,6 +4,7 @@
 #include <DNSServer.h>
 #include <EEPROM.h>
 #include <ATEMmin.h>
+#include <TallyServer.h>
 
 //Define LED color pins
 #define PIN_RED     D0
@@ -39,6 +40,8 @@ ESP8266WebServer server(80);
 
 ATEMmin atemSwitcher;
 
+TallyServer tallyServer;
+
 uint8_t state = STATE_STARTING;
 
 //Define sturct for holding tally settings (mostly to simplify EEPROM read and write, in order to persist settings)
@@ -56,6 +59,11 @@ struct Settings {
 Settings settings;
 
 bool firstRun = true;
+
+unsigned long lastMillis;
+unsigned long lastMicros;
+unsigned long microsCounter;
+int counter;
 
 //Perform initial setup on power on
 void setup() {
@@ -101,12 +109,17 @@ void setup() {
     server.onNotFound(handleNotFound);
     server.begin();
 
+    tallyServer.begin();
+
     //Wait for result from first attempt to connect - This makes sure it only activates the softAP if it was unable to connect,
     //and not just because it hasn't had the time to do so yet. It's blocking, so don't use it inside loop()
     WiFi.waitForConnectResult();
 
     //Set state to connecting before entering loop
     changeState(STATE_CONNECTING_TO_WIFI);
+
+    lastMillis = millis();
+    lastMicros = micros();
 }
 
 void loop() {
@@ -151,10 +164,16 @@ void loop() {
             //Handle data exchange and connection to swithcher
             atemSwitcher.runLoop();
 
+            int tallySources = atemSwitcher.getTallyByIndexSources();
+            tallyServer.setTallySources(tallySources);
+            for (int i = 0; i < tallySources; i++) {
+                tallyServer.setTallyFlag(i, atemSwitcher.getTallyByIndexTallyFlags(i));
+            }
+
             //Set tally light accordingly
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
                 setLED(LED_RED);
-            } else if ((!(settings.tallyMode == MODE_PROGRAM_ONLY))                                 //if not program only
+            } else if ((!(settings.tallyMode == MODE_PROGRAM_ONLY))                             //if not program only
                        && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
                            || settings.tallyMode == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
                 setLED(LED_GREEN);
@@ -171,19 +190,41 @@ void loop() {
                 //Force atem library to reset connection, in order for status to read correctly on website.
                 atemSwitcher.begin(settings.switcherIP);
                 atemSwitcher.connect();
+
+                //Reset tally server's tally flags, They won't get the message, but it'll be reset for when the connectoin is back.
+                tallyServer.resetTallyFlags();
+                
             } else if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
                 Serial.println("------------------------");
                 Serial.println("Connection to Switcher lost...");
                 changeState(STATE_CONNECTING_TO_SWITCHER);
+
+                //Reset tally server's tally flags, so clients turn off their lights.
+                tallyServer.resetTallyFlags();
             }
             break;
     }
+
+    //Handle Tally Server
+    tallyServer.runLoop();
 
     //Handle DNS requests
     dnsServer.processNextRequest();
 
     //Handle web interface
     server.handleClient();
+
+    microsCounter += (micros() - lastMicros);
+    lastMicros = micros();
+    counter++;
+    if(millis() - lastMillis > 10) {
+        Serial.print("Loop Time: ");
+        Serial.println((double)microsCounter / counter);
+        lastMillis = millis();
+        microsCounter = 0;
+        counter = 0;
+        lastMicros = micros();    
+    }
 }
 
 void changeState(uint8_t stateToChangeTo) {
@@ -290,7 +331,7 @@ void handleRoot() {
     else
         html += "Disconnected - Waiting for WiFi";
     html += "</td> </tr> <tr> <td>ATEM switcher IP:</td> <td>";
-    html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];;
+    html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];
     html += "</td> </tr> </table><br> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <td> <h2>Settings:</h2> </td> </tr> </table><br> <table> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td><input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
     html += WiFi.hostname();
     html += "\" required> <tr> <td>Tally Light mode: </td> <td><select name = \"tMode\"> <option value=\"";

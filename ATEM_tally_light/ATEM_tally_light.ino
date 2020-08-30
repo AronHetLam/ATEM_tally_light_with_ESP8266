@@ -223,7 +223,7 @@ void loop() {
         lastMillis = millis();
         microsCounter = 0;
         counter = 0;
-        lastMicros = micros();    
+        lastMicros = micros();
     }
 }
 

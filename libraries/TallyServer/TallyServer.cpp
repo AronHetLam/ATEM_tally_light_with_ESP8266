@@ -134,6 +134,9 @@ void TallyServer::runLoop() {
 
     if(_tallyFlagsChanged) { //Send new tally data to clients
         //Reset buffer and construct tally data cmd. The cmd is the same for all clients
+        #if TALLY_SERVER_DEBUG
+        Serial.println("Sending new tally data");
+        #endif
         _resetBuffer();
         uint16_t cmdLen = 12 + _createTallyDataCmd();
 
@@ -164,8 +167,12 @@ void TallyServer::runLoop() {
                 _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, 12);
                 _sendBuffer(client, 12);
 
-            } else if(_hasTimePassed(client->_lastRecv, 5000)) 
+            } else if(_hasTimePassed(client->_lastRecv, 5000)) {
                 _resetClient(client);
+                #if TALLY_SERVER_DEBUG
+                Serial.println("Client disconnected - Was initialized");
+                #endif
+            }
 
         } else if(client->_isConnected) {
             if(_hasTimePassed(client->_lastSend, TALLY_SERVER_KEEP_ALIVE_MSG_INTERVAL)) {
@@ -174,16 +181,22 @@ void TallyServer::runLoop() {
                 _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_ACCEPTED;
                 _sendBuffer(client, 20);
 
-            } else if(_hasTimePassed(client->_lastRecv, 5000)) _resetClient(client);
+            } else if(_hasTimePassed(client->_lastRecv, 5000)) {
+                _resetClient(client);
+                #if TALLY_SERVER_DEBUG
+                Serial.println("Client disconnected - Was not initialized");
+                #endif
+            }
         }
     }
 }
 
 /** 
- * Set number of tally sources to send to clients
+ * Set number of tally sources to send to clients. Must be less than 21.
  */
 void TallyServer::setTallySources(uint8_t tallySources) {
-    _atemTallySources = tallySources;
+    if(tallySources < 21)
+        _atemTallySources = tallySources;
 }
 
 /**
@@ -222,7 +235,7 @@ uint16_t TallyServer::_createTallyDataCmd() {
 
     //Tally flag for each source
     for(int i = 0; i < _atemTallySources; i++) {
-        _buffer[14 + i] = _atemTallyFlags[i];
+        _buffer[22 + i] = _atemTallyFlags[i];
     }
 
     return cmdLen;

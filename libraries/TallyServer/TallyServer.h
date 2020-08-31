@@ -1,3 +1,23 @@
+/*
+Copyright (C) 2020 Aron N. Het Lam, aronhetlam@gmail.com
+
+This file is a part of the Tally Sever library for use with Kasper Skårhøj's
+(<https://skaarhoj.com>) ATEM clinet libraries for Arduino.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "Arduino.h"
 
 #define TALLY_SERVER_DEBUG 0
@@ -21,7 +41,7 @@
 
 #define TALLY_SERVER_BUFFER_LENGTH  42 //Max 42: Header = 12 + cmdHeader = 8 + tallySources = 2 + max 20 tally flags
 
-#define TALLY_SERVER_MAX_CLIENTS    20 
+#define TALLY_SERVER_MAX_CLIENTS    20
 
 #define TALLY_SERVER_KEEP_ALIVE_MSG_INTERVAL 1500
 

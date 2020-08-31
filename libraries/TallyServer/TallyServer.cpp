@@ -40,7 +40,7 @@ void TallyServer::runLoop() {
 
             if (client) {
                 client->_sessionID = (_buffer[2] << 8) + _buffer[3];
-                uint16_t remotePacketID = (_buffer[11] << 8) + _buffer[12];
+                uint16_t remotePacketID = (_buffer[10] << 8) + _buffer[11];
                 if (remotePacketID > 0) client->_lastRemotePacketID = remotePacketID;
                 client->_lastRecv = millis();
 

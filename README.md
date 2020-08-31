@@ -20,7 +20,7 @@ RED | Tally program
 GREEN | Tally preview
 OFF | Tally neither live or preview (or no power...)
 
-## Moeds of operation
+## Modes of operation
 By default the tally light should be set up to work as a normal tally light would in a professional enviroment. However, as I in my personal use case needed it to work a bit differently, I added the following modes of oparation for convenience.
 Mode | Description
 -----|------------

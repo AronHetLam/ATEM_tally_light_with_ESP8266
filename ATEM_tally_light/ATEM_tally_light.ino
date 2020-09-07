@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //Include libraries:
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <DNSServer.h>
 #include <EEPROM.h>
 #include <ATEMmin.h>
 #include <TallyServer.h>
@@ -51,11 +50,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define MODE_PREVIEW_STAY_ON            2
 #define MODE_PROGRAM_ONLY               3
 
-//Define DNS port
-#define DNS_PORT    53
-
 //Initialize global variables
-DNSServer dnsServer;
 ESP8266WebServer server(80);
 
 ATEMmin atemSwitcher;
@@ -79,11 +74,6 @@ struct Settings {
 Settings settings;
 
 bool firstRun = true;
-
-unsigned long lastMillis;
-unsigned long lastMicros;
-unsigned long microsCounter;
-int counter;
 
 //Perform initial setup on power on
 void setup() {
@@ -121,8 +111,6 @@ void setup() {
     Serial.println("Connecting to WiFi...");
     Serial.println("Network name (SSID): " + WiFi.SSID());
 
-    dnsServer.start(DNS_PORT, "*", IPAddress(192, 168, 4, 1));
-
     // Initialize and begin HTTP server for handeling the web interface
     server.on("/", handleRoot);
     server.on("/save", handleSave);
@@ -137,9 +125,6 @@ void setup() {
 
     //Set state to connecting before entering loop
     changeState(STATE_CONNECTING_TO_WIFI);
-
-    lastMillis = millis();
-    lastMicros = micros();
 }
 
 void loop() {
@@ -167,7 +152,6 @@ void loop() {
             if (firstRun) {
                 atemSwitcher.begin(settings.switcherIP);
                 //atemSwitcher.serialOutput(0x80); //Makes Atem library print debug info
-                atemSwitcher.connect();
                 Serial.println("------------------------");
                 Serial.println("Connecting to switcher...");
                 Serial.println((String)"Switcher IP:         " + settings.switcherIP[0] + "." + settings.switcherIP[1] + "." + settings.switcherIP[2] + "." + settings.switcherIP[3]);
@@ -190,6 +174,9 @@ void loop() {
                 tallyServer.setTallyFlag(i, atemSwitcher.getTallyByIndexTallyFlags(i));
             }
 
+            //Handle Tally Server
+            tallyServer.runLoop();
+
             //Set tally light accordingly
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
                 setLED(LED_RED);
@@ -209,11 +196,10 @@ void loop() {
 
                 //Force atem library to reset connection, in order for status to read correctly on website.
                 atemSwitcher.begin(settings.switcherIP);
-                atemSwitcher.connect();
 
                 //Reset tally server's tally flags, They won't get the message, but it'll be reset for when the connectoin is back.
                 tallyServer.resetTallyFlags();
-                
+
             } else if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
                 Serial.println("------------------------");
                 Serial.println("Connection to Switcher lost...");
@@ -225,26 +211,8 @@ void loop() {
             break;
     }
 
-    //Handle Tally Server
-    tallyServer.runLoop();
-
-    //Handle DNS requests
-    dnsServer.processNextRequest();
-
     //Handle web interface
     server.handleClient();
-
-    microsCounter += (micros() - lastMicros);
-    lastMicros = micros();
-    counter++;
-    if(millis() - lastMillis > 10) {
-        Serial.print("Loop Time: ");
-        Serial.println((double)microsCounter / counter);
-        lastMillis = millis();
-        microsCounter = 0;
-        counter = 0;
-        lastMicros = micros();
-    }
 }
 
 void changeState(uint8_t stateToChangeTo) {
@@ -345,7 +313,7 @@ void handleRoot() {
     if (atemSwitcher.hasInitialized())
         html += "Connected - Initialized";
     else if (atemSwitcher.isConnected())
-        html += "Connected - Not initialized";
+        html += "Connected - Wating for initialization - Connection might have been rejected";
     else if (WiFi.status() == WL_CONNECTED)
         html += "Disconnected - No response from switcher";
     else

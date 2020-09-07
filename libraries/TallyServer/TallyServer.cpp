@@ -38,156 +38,169 @@ void TallyServer::begin() {
  *
  **/
 void TallyServer::runLoop() {
-    // Handle incoming data
-    uint16_t packetSize = _udp.parsePacket();
+    // Handle incoming data    
+    uint16_t packetSize = 0;
+    while ((packetSize = _udp.parsePacket()) > 0) {
+        if (_udp.available()) {
+            IPAddress remoteIP = _udp.remoteIP();
+            uint16_t remotePort = _udp.remotePort();
 
-    if (_udp.available()) {
-        IPAddress remoteIP = _udp.remoteIP();
-        uint16_t remotePort = _udp.remotePort();
+            _udp.read(_buffer, 12);
+            uint8_t flags = _buffer[0] & 0b11111000;
+            uint16_t packetLen = (_buffer[0] & 0b00000111) + _buffer[1];
+            #if TALLY_SERVER_DEBUG >= 2
+            Serial.print(remoteIP);
+            Serial.print(':');
+            Serial.print(remotePort);
+            Serial.print(" - paket size: ");
+            Serial.print(packetSize);
+            Serial.print(", paket length: ");
+            Serial.println(packetLen);
+            #endif
 
-        _udp.read(_buffer, 12);
-        uint8_t flags = _buffer[0] & 0b11111000;
-        uint16_t packetLen = (_buffer[0] & 0b00000111) + _buffer[1];
-        #if TALLY_SERVER_DEBUG
-        Serial.print(remoteIP);
-        Serial.print(':');
-        Serial.print(remotePort);
-        Serial.print(" - paket size: ");
-        Serial.print(packetSize);
-        Serial.print(", paket length: ");
-        Serial.println(packetLen);
-        #endif
+            if(packetSize == packetLen) { //If not then same something went wrong and we skip the packet.
+                TallyClient *client = _getTallyClient(remoteIP, remotePort);
 
-        if(packetSize == packetLen) { //If not the same something went wrong and we skip the packet.
-            TallyClient *client = _getTallyClient(remoteIP, remotePort);
+                if (client) {
+                    client->_sessionID = (_buffer[2] << 8) + _buffer[3];
+                    uint16_t remotePacketID = (_buffer[10] << 8) + _buffer[11];
+                    if (remotePacketID > 0) client->_lastRemotePacketID = remotePacketID;
+                    client->_lastRecv = millis();
 
-            if (client) {
-                client->_sessionID = (_buffer[2] << 8) + _buffer[3];
-                uint16_t remotePacketID = (_buffer[10] << 8) + _buffer[11];
-                if (remotePacketID > 0) client->_lastRemotePacketID = remotePacketID;
-                client->_lastRecv = millis();
-
-                if (client->_isInitialized) {
-                    if(flags & TALLY_SERVER_FLAG_ACK) {
-                        client->_lastAckedID = (_buffer[4] << 8) + _buffer[5];
-                        #if TALLY_SERVER_DEBUG
-                        Serial.print(client->_tallyIP);
-                        Serial.print(':');
-                        Serial.print(client->_tallyPort);
-                        Serial.println(" - Ack recieved");
-                        #endif
-
-                    } if(flags & TALLY_SERVER_FLAG_ACK_REQUEST) {
-                        _resetBuffer();
-                        _createHeader(client, TALLY_SERVER_FLAG_ACK, 12, remotePacketID);
-                        _sendBuffer(client, 12);
-                        #if TALLY_SERVER_DEBUG
-                        Serial.print(client->_tallyIP);
-                        Serial.print(':');
-                        Serial.print(client->_tallyPort);
-                        Serial.println(" - Ack resquest recieved - responded");
-                        #endif
-
-                    } if(flags & TALLY_SERVER_FLAG_RESEND_REQUEST) { //All we ever send is tally data... So let's just do that again.
-                        _resetBuffer();
-                        uint16_t cmdLen = 12 + _createTallyDataCmd();
-                        uint16_t resendPacketID = (_buffer[6] << 8) + _buffer[7];
-                        _createHeader(client, TALLY_SERVER_FLAG_RESENT_PACKAGE, cmdLen, 0, resendPacketID);
-                        _sendBuffer(client, cmdLen);
-                        #if TALLY_SERVER_DEBUG
-                        Serial.print(client->_tallyIP);
-                        Serial.print(':');
-                        Serial.print(client->_tallyPort);
-                        Serial.println(" - Resend resquest recieved - sent tally data with wanted packageID");
-                        #endif
-                    }
-
-                    #if TALLY_SERVER_DEBUG
-                        if(flags & TALLY_SERVER_FLAG_RESENT_PACKAGE) {
+                    if (client->_isInitialized) {
+                        if(flags & TALLY_SERVER_FLAG_ACK) {
+                            client->_lastAckedID = (_buffer[4] << 8) + _buffer[5];
+                            #if TALLY_SERVER_DEBUG > 1
                             Serial.print(client->_tallyIP);
                             Serial.print(':');
                             Serial.print(client->_tallyPort);
-                            Serial.println(" - Resent package recieved - ignoring it.");
-                        }
-                        if(flags & TALLY_SERVER_FLAG_HELLO) {
+                            Serial.println(" - Ack recieved");
+                            #endif
+
+                        } if(flags & TALLY_SERVER_FLAG_ACK_REQUEST) {
+                            _resetBuffer();
+                            _createHeader(client, TALLY_SERVER_FLAG_ACK, 12, remotePacketID);
+                            _sendBuffer(client, 12);
+                            #if TALLY_SERVER_DEBUG
                             Serial.print(client->_tallyIP);
                             Serial.print(':');
                             Serial.print(client->_tallyPort);
-                            Serial.println(" - Hello packet recieved - ignoring it.");
+                            Serial.println(" - Ack resquest recieved - responded");
+                            #endif
+
+                        } if(flags & TALLY_SERVER_FLAG_RESEND_REQUEST) { //All we ever send is tally data... So let's just do that again.
+                            uint16_t resendPacketID = (_buffer[6] << 8) + _buffer[7] + 1; //For some reason ATEMbase library subtracts one when requesting a resend - we add one back for it to work...
+                            _resetBuffer();
+                            uint16_t cmdLen = 12 + _createTallyDataCmd();
+                            _createHeader(client, TALLY_SERVER_FLAG_RESENT_PACKAGE | TALLY_SERVER_FLAG_ACK | TALLY_SERVER_FLAG_ACK_REQUEST, cmdLen, 0, resendPacketID);
+                            _sendBuffer(client, cmdLen);
+                            #if TALLY_SERVER_DEBUG
+                            Serial.print(client->_tallyIP);
+                            Serial.print(':');
+                            Serial.print(client->_tallyPort);
+                            Serial.print(" - Resend resquest recieved - sent tally data with wanted packageID: ");
+                            Serial.println(resendPacketID);
+                            #endif
                         }
-                    #endif
 
-                } else if (client->_isConnected) { // Initialize new connection
-                    if(flags & TALLY_SERVER_FLAG_ACK) {
-                        _resetBuffer();
-                        uint16_t cmdLen = 12 + _createTallyDataCmd();
-                        _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, cmdLen);
-                        _sendBuffer(client, cmdLen);
-
-                        _resetBuffer();
-                        _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, 12);
-                        _sendBuffer(client, 12);
-
-                        client->_isInitialized = true;
                         #if TALLY_SERVER_DEBUG
-                        Serial.print(client->_tallyIP);
-                        Serial.print(':');
-                        Serial.print(client->_tallyPort);
-                        Serial.println(" - Client Initialized");
+                            if(flags & TALLY_SERVER_FLAG_RESENT_PACKAGE) {
+                                Serial.print(client->_tallyIP);
+                                Serial.print(':');
+                                Serial.print(client->_tallyPort);
+                                Serial.println(" - Resent package recieved - ignoring it.");
+                            }
+                            if(flags & TALLY_SERVER_FLAG_HELLO) {
+                                Serial.print(client->_tallyIP);
+                                Serial.print(':');
+                                Serial.print(client->_tallyPort);
+                                Serial.println(" - Hello packet recieved - ignoring it.");
+                            }
                         #endif
-                    }
 
-                    #if TALLY_SERVER_DEBUG
-                    else {
-                        Serial.print(client->_tallyIP);
-                        Serial.print(':');
-                        Serial.print(client->_tallyPort);
-                        Serial.println(" - Not initialized - Expected ack for hello packet");
-                    }
-                    #endif
+                    } else if (client->_isConnected) { // Initialize new connection
+                        if(flags & TALLY_SERVER_FLAG_ACK) {
+                            _resetBuffer();
+                            uint16_t cmdLen = 12 + _createTallyDataCmd();
+                            _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, cmdLen);
+                            _sendBuffer(client, cmdLen);
 
-                } else { //New connection
-                    if (flags & TALLY_SERVER_FLAG_HELLO) {//Respond to first hello packet.
+                            _resetBuffer();
+                            _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, 12);
+                            _sendBuffer(client, 12);
+
+                            client->_isInitialized = true;
+                            #if TALLY_SERVER_DEBUG
+                            Serial.print(client->_tallyIP);
+                            Serial.print(':');
+                            Serial.print(client->_tallyPort);
+                            Serial.println(" - Client Initialized");
+                            #endif
+                        }
+
+                        #if TALLY_SERVER_DEBUG
+                        else {
+                            Serial.print(client->_tallyIP);
+                            Serial.print(':');
+                            Serial.print(client->_tallyPort);
+                            Serial.println(" - Not initialized - Expected ack for hello packet");
+                        }
+                        #endif
+
+                    } else { //New connection
+                        if (flags & TALLY_SERVER_FLAG_HELLO) {//Respond to first hello packet.
+                            _resetBuffer();
+                            _createHeader(client, TALLY_SERVER_FLAG_HELLO, 20);
+                            _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_ACCEPTED;
+                            _sendBuffer(client, 20);
+                            client->_isConnected = true;
+                            #if TALLY_SERVER_DEBUG
+                            Serial.print(client->_tallyIP);
+                            Serial.print(':');
+                            Serial.print(client->_tallyPort);
+                            Serial.println(" - Client connected");
+                            #endif
+
+                        } else { //Something is wrong - reset client. 
+                            _resetClient(client);
+                            #if TALLY_SERVER_DEBUG
+                            Serial.print(client->_tallyIP);
+                            Serial.print(':');
+                            Serial.print(client->_tallyPort);
+                            Serial.println(" - First packet not hello packet - reset client");
+                            #endif
+                        }
+                    }
+                } else { //No client means no empty spot
+                    if (flags & TALLY_SERVER_FLAG_HELLO) { //Reject connection
                         _resetBuffer();
+                        client = new TallyServer::TallyClient();
+                        client->_tallyIP = remoteIP;
+                        client->_tallyPort = remotePort;
                         _createHeader(client, TALLY_SERVER_FLAG_HELLO, 20);
-                        _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_ACCEPTED;
+                        _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_REJECTED;
                         _sendBuffer(client, 20);
-                        client->_isConnected = true;
                         #if TALLY_SERVER_DEBUG
                         Serial.print(client->_tallyIP);
                         Serial.print(':');
                         Serial.print(client->_tallyPort);
-                        Serial.println(" - Client connected");
+                        Serial.println(" - Connection rejected - no empty spot");
                         #endif
-
-                    } else { //Something is wrong - reset client. 
-                        _resetClient(client);
-                        #if TALLY_SERVER_DEBUG
-                        Serial.print(client->_tallyIP);
-                        Serial.print(':');
-                        Serial.print(client->_tallyPort);
-                        Serial.println(" - First packet not hello packet - reset client");
-                        #endif
-                    }
-                }
-            } else { //No client means no empty spot
-                if (flags & TALLY_SERVER_FLAG_HELLO) { //Reject connection
-                    _resetBuffer();
-                    _createHeader(client, TALLY_SERVER_FLAG_HELLO, 20);
-                    _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_REJECTED;
-                    _sendBuffer(client, 20);
+                    } //Else we ignore what came in..
+                    
                     #if TALLY_SERVER_DEBUG
-                    Serial.print(client->_tallyIP);
-                    Serial.print(':');
-                    Serial.print(client->_tallyPort);
-                    Serial.println(" - Connection rejected - no empty spot");
+                    else Serial.println("Connection rejected - packet not hello packet");
                     #endif
-                } //Else we ignore what came in..
-                
-                #if TALLY_SERVER_DEBUG
-                else Serial.println("Connection rejected - packet not hello packet");
-                #endif
+                }
+            } 
+            #if TALLY_SERVER_DEBUG
+            else {
+                Serial.print("Packet size mismatch - ");
+                Serial.print(packetSize);
+                Serial.print(" != ");
+                Serial.println(packetLen);
             }
+            #endif
         }
     }
 
@@ -215,16 +228,28 @@ void TallyServer::runLoop() {
     for(int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) {
         TallyClient *client = &_clients[i];
         if(client->_isInitialized) {
-            if(client->_lastAckedID < client->_localPacketIdCounter && _hasTimePassed(client->_lastSend, 500)) {
+            if(client->_lastAckedID < client->_localPacketIdCounter && _hasTimePassed(client->_lastSend, 250)) {
                 _resetBuffer();
                 uint16_t cmdLen = 12 + _createTallyDataCmd();
                 _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, cmdLen);
                 _sendBuffer(client, cmdLen);
+                #if TALLY_SERVER_DEBUG
+                Serial.print(client->_tallyIP);
+                Serial.print(':');
+                Serial.print(client->_tallyPort);
+                Serial.println(" - Ack not recieved - Resent tally data");
+                #endif
 
             } else if(_hasTimePassed(client->_lastRecv, TALLY_SERVER_KEEP_ALIVE_MSG_INTERVAL) && _hasTimePassed(client->_lastSend, TALLY_SERVER_KEEP_ALIVE_MSG_INTERVAL)) {
                 _resetBuffer();
                 _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, 12);
                 _sendBuffer(client, 12);
+                #if TALLY_SERVER_DEBUG > 1
+                Serial.print(client->_tallyIP);
+                Serial.print(':');
+                Serial.print(client->_tallyPort);
+                Serial.println(" - Ack request sent");
+                #endif
 
             } else if(_hasTimePassed(client->_lastRecv, 5000)) {
                 _resetClient(client);

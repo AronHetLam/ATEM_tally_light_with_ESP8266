@@ -30,6 +30,10 @@ Program only | Tally will be off whenever not in program
 
 NOTE: Atem swithcers only allow for 5-8 simultanious clients (dependant on the model). Be mindful of this as each of these tally lights will act as a seperate client alongside eg. a computer running Atem software control.
 
+To get around this issue v2.0 introduced Tally Server functionality, which makes the system only require one connection from the switcher. An examle setup is shown in the diagram below. As this brings a lot of flexibillity with how to conenct the units, bear in mind that the ESP8266 isn't that powerful, and is limited to 5 clients each. (In some cases 5 might even be to many).
+
+<img src="https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/blob/master/Wiki/DIY_guide/img/Example_setup.jpg" alt="Exaple setup eith tally server funtionality">
+
 # Use Arduino IDE with ESP8266 module
 See details at [ESP8266](https://github.com/esp8266/Arduino) on how to setup and use ESP8266 modules like a regular Arduino board.
 They have links for further documentation as well.

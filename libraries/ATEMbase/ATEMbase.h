@@ -32,7 +32,7 @@ you can keep a clear conscience: http://skaarhoj.com/about/licenses/
 
 #include "Arduino.h"
 
-#ifdef ESP8266
+#if defined ESP8266 || defined ESP32
 #include <WifiUDP.h>
 #else
 #include <EthernetUdp.h>
@@ -54,7 +54,7 @@ you can keep a clear conscience: http://skaarhoj.com/about/licenses/
 class ATEMbase
 {
   protected:
-  	#ifdef ESP8266
+  	#if defined ESP8266 || defined ESP32
   	WiFiUDP _Udp;
   	#else
 	EthernetUDP _Udp;					// UDP object for communication, see constructor.

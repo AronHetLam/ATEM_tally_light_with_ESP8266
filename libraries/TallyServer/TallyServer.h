@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define TALLY_SERVER_DEBUG 0
 
-#ifdef ESP8266
+#if defined ESP8266 || defined ESP32
 #include <WifiUDP.h>
 #else
 #include <EthernetUdp.h>
@@ -47,11 +47,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 class TallyServer {
 private:
-#ifdef ESP8266
+#if defined ESP8266 || defined ESP32
     WiFiUDP _udp;
 #else
     EthernetUDP _udp;
 #endif
+
     struct TallyClient {
         IPAddress _tallyIP;
         uint16_t _tallyPort;
@@ -93,6 +94,7 @@ private:
 public:
     TallyServer();
     void begin();
+    void end();
     void runLoop();
     void setTallySources(uint8_t tallySources);
     void setTallyFlag(uint8_t tallyIndex, uint8_t tallyFlag);

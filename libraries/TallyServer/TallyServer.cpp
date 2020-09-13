@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "TallyServer.h"
 
 TallyServer::TallyServer() {
-#ifdef ESP8266
+#if defined ESP8266 || defined ESP32
     WiFiUDP Udp;
 #else
     EthernetUDP Udp;
@@ -30,13 +30,25 @@ TallyServer::TallyServer() {
     _udp = Udp;
 }
 
+/**
+ * Begin tally server, letting other tally lights connect to it in runLoop()
+ */
 void TallyServer::begin() {
     _udp.begin(9910);
 }
 
-/** Handle data transmission and connections to clients
- *
- **/
+/**
+ * Disable tally server, disconnecting all tally lights currently connected.
+ */
+void TallyServer::end() {
+    _udp.stop();
+
+    for (int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) _resetClient(&_clients[i]);
+}
+
+/** 
+ * Handle data transmission and connections to clients
+ */
 void TallyServer::runLoop() {
     // Handle incoming data    
     uint16_t packetSize = 0;
@@ -67,7 +79,7 @@ void TallyServer::runLoop() {
                     if (remotePacketID > 0) client->_lastRemotePacketID = remotePacketID;
                     client->_lastRecv = millis();
 
-                    if (client->_isInitialized) {
+                    if (client->_isInitialized) { //Handle initialized client
                         if(flags & TALLY_SERVER_FLAG_ACK) {
                             client->_lastAckedID = (_buffer[4] << 8) + _buffer[5];
                             #if TALLY_SERVER_DEBUG > 1
@@ -194,7 +206,7 @@ void TallyServer::runLoop() {
                 }
             } 
             #if TALLY_SERVER_DEBUG
-            else {
+            else { //Packet size and length mismathc, something went wrong in the transmission - we ignore it. 
                 Serial.print("Packet size mismatch - ");
                 Serial.print(packetSize);
                 Serial.print(" != ");
@@ -224,7 +236,9 @@ void TallyServer::runLoop() {
         _tallyFlagsChanged = false;
     }
 
-    //Keep connections alive by requesting ACK packages form them wtih a given interval
+    /**
+     * Keep connections alive by requesting ACK packages form them wtih a given interval
+     */
     for(int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) {
         TallyClient *client = &_clients[i];
         if(client->_isInitialized) {

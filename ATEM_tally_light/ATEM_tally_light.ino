@@ -25,10 +25,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <ATEMmin.h>
 #include <TallyServer.h>
 
-//Define LED color pins
-#define PIN_RED     D0
-#define PIN_GREEN   D2
-#define PIN_BLUE    D1
+//Define LED1 color pins
+#define PIN_RED1    D0
+#define PIN_GREEN1  D2
+#define PIN_BLUE1   D1
+
+//Define LED2 color pins
+#define PIN_RED2    D4
+#define PIN_GREEN2  D5
+#define PIN_BLUE2   D6
+
 
 //Define LED colors
 #define LED_OFF     0
@@ -78,10 +84,15 @@ bool firstRun = true;
 //Perform initial setup on power on
 void setup() {
     //Init pins for LED
-    pinMode(PIN_RED, OUTPUT);
-    pinMode(PIN_GREEN, OUTPUT);
-    pinMode(PIN_BLUE, OUTPUT);
-    setLED(LED_BLUE);
+    pinMode(PIN_RED1, OUTPUT);
+    pinMode(PIN_GREEN1, OUTPUT);
+    pinMode(PIN_BLUE1, OUTPUT);
+
+    pinMode(PIN_RED2, OUTPUT);
+    pinMode(PIN_GREEN2, OUTPUT);
+    pinMode(PIN_BLUE2, OUTPUT);
+    
+    setBothLEDs(LED_BLUE);
 
     //Start Serial
     Serial.begin(115200);
@@ -142,7 +153,7 @@ void loop() {
                     firstRun = false;
                     WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                     WiFi.softAP("Tally Light setup");
-                    setLED(LED_WHITE);
+                    setBothLEDs(LED_WHITE);
                 }
             }
             break;
@@ -179,14 +190,25 @@ void loop() {
 
             //Set tally light accordingly
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
-                setLED(LED_RED);
+                setBothLEDs(LED_RED);
             } else if ((!(settings.tallyMode == MODE_PROGRAM_ONLY))                             //if not program only
                        && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
                            || settings.tallyMode == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
-                setLED(LED_GREEN);
+                setBothLEDs(LED_GREEN);
             } else {                                                                            // If tally is neither
-                setLED(LED_OFF);
+                setBothLEDs(LED_OFF);
             }
+
+//            //Set tally light LED 2 accordingly
+//            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
+//                setLED2(LED_RED);
+//            } else if ((!(settings.tallyMode == MODE_PROGRAM_ONLY))                             //if not program only
+//                       && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
+//                           || settings.tallyMode == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
+//                setLED2(LED_GREEN);
+//            } else {                                                                            // If tally is neither
+//                setLED2(LED_OFF);
+//            }
 
             //Switch state if connection is lost, dependant on which connection is lost.
             if (WiFi.status() != WL_CONNECTED) {
@@ -220,55 +242,68 @@ void changeState(uint8_t stateToChangeTo) {
     switch (stateToChangeTo) {
         case STATE_CONNECTING_TO_WIFI:
             state = STATE_CONNECTING_TO_WIFI;
-            setLED(LED_BLUE);
+            setBothLEDs(LED_BLUE);
             break;
         case STATE_CONNECTING_TO_SWITCHER:
             state = STATE_CONNECTING_TO_SWITCHER;
-            setLED(LED_PINK);
+            setBothLEDs(LED_PINK);
             break;
         case STATE_RUNNING:
             state = STATE_RUNNING;
-            setLED(LED_GREEN);
+            setBothLEDs(LED_GREEN);
             break;
     }
 }
 
-void setLED(uint8_t color) {
+void setBothLEDs(uint8_t color) {
+    setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
+    setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
+}
+
+void setLED1(uint8_t color) {
+    setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
+}
+
+void setLED2(uint8_t color) {
+    setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
+}
+
+void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
     switch (color) {
         case LED_OFF:
-            digitalWrite(PIN_RED, 0);
-            digitalWrite(PIN_GREEN, 0);
-            digitalWrite(PIN_BLUE, 0);
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 0);
             break;
         case LED_RED:
-            digitalWrite(PIN_RED, 1);
-            digitalWrite(PIN_GREEN, 0);
-            digitalWrite(PIN_BLUE, 0);
+            digitalWrite(pinRed, 1);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 0);
             break;
         case LED_GREEN:
-            digitalWrite(PIN_RED, 0);
-            digitalWrite(PIN_GREEN, 1);
-            digitalWrite(PIN_BLUE, 0);
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 1);
+            digitalWrite(pinBlue, 0);
             break;
         case LED_BLUE:
-            digitalWrite(PIN_RED, 0);
-            digitalWrite(PIN_GREEN, 0);
-            digitalWrite(PIN_BLUE, 1);
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 1);
             break;
         case LED_YELLOW:
-            digitalWrite(PIN_RED, 1);
-            digitalWrite(PIN_GREEN, 1);
-            digitalWrite(PIN_BLUE, 0);
+            digitalWrite(pinRed, 1);
+            digitalWrite(pinGreen, 1);
+            digitalWrite(pinBlue, 0);
             break;
         case LED_PINK:
-            digitalWrite(PIN_RED, 1);
-            digitalWrite(PIN_GREEN, 0);
-            analogWrite(PIN_BLUE, 0xff);
+            digitalWrite(pinRed, 1);
+            digitalWrite(pinGreen, 0);
+            analogWrite(pinBlue, 0xff);
             break;
         case LED_WHITE:
-            digitalWrite(PIN_RED, 1);
-            digitalWrite(PIN_GREEN, 1);
-            digitalWrite(PIN_BLUE, 1);
+            digitalWrite(pinRed, 1);
+            digitalWrite(pinGreen, 1);
+            digitalWrite(pinBlue, 1);
             break;
     }
 }

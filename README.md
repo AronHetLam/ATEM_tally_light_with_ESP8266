@@ -10,10 +10,13 @@ Once set up, it will automatically connect to an ATEM swithcer over WiFi and fun
 
 Once the program is uploaded to the ESP8266 the setup is done with a webpage it serves over WiFi where you are able to see status details, and perform the basic setup. Depending on if it's connecting to a known network or not it will serve the webpage on it's IP address, or on [192.168.4.1](HTTP://192.168.4.1) (default) over a softAP (access point) named "Tally light setup". For more detals, see the guide int the [wiki](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/wiki/DIY-guide).
 
-As Atem swithcers only allow for 5-8 simultanious clients (dependant on the model) v2.0 introduced Tally Server functionality. This makes the system only require one connection from the switcher, as the tally lights can retransmit data to other tallys. An example setup is shown in the diagram below. As this brings a lot of flexibility with how to connect the units, bear in mind that the ESP8266 isn't that powerful, and is limited to 5 clients each.
+As Atem swithcers only allow for 5-8 simultanious clients (dependant on the model) v2.0 introduced Tally Server functionality. This makes the system only require one connection from the switcher, as the tally lights can retransmit data to other tallys. An example setup is shown in the diagram below, where arrows indicate the direction of tally data from swtcher/tally unit to client tally unit.
 
 <img src="https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/blob/master/Wiki/DIY_guide/img/Example_setup.jpg" alt="Example setup with tally server functionality">
 
+NOTE: As this brings a lot of flexibility with how to connect the units, bear in mind that the ESP8266 isn't that powerful, and is limited to 5 clients each. (In some cases 5 might even be too many).
+
+## Connection and tally state indication
 The different states of connection is signalled with LED colors.
 Color | Description
 ------|--------

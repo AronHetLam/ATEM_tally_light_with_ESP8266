@@ -20,8 +20,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "TallyServer.h"
 
+/**
+ * Contruct TallyServer with default capacity of 5 clients
+ */
 TallyServer::TallyServer() : TallyServer(TALLY_SERVER_DEFAULT_MAX_CLIENTS) { }
 
+/**
+ * Contruct TallyServer with a client capacity of maxClinents 
+ */
 TallyServer::TallyServer(int maxClients) {
     #if defined ESP8266 || defined ESP32
         WiFiUDP Udp;
@@ -307,7 +313,7 @@ void TallyServer::runLoop() {
 }
 
 /** 
- * Set number of tally sources to send to clients. Must be less than 21.
+ * Set the number of tally sources to send to clients. Must be less than 21.
  */
 void TallyServer::setTallySources(uint8_t tallySources) {
     if(tallySources < 21)

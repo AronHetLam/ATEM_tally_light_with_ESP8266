@@ -71,7 +71,6 @@ private:
     TallyClient* _clients;
     int _maxClients = 0; 
 
-
     uint16_t _atemTallySources;
     uint8_t _atemTallyFlags[21];
     bool _tallyFlagsChanged;

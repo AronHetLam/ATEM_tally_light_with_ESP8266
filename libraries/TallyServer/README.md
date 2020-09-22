@@ -12,14 +12,15 @@ Construct TallyServer with a set max capacity of clients connected.
 _maxClients_ - The max number of clients to accept.
 
 ## void begin()
-Begin tally server, letting other tally lights connect to it in _runLoop()_
+Begin tally server, letting other tally lights connect to it in when calling _runLoop()_
 
 ## void end()
 Disable tally server, disconnecting all tally lights currently connected.
 
 ## void runLoop()
 Handle data transmission and connections to clients.
-It's important that this is called __all the time__ in your _loop()_, as else the connection to clients will be dropped.
+
+It's important that this is called __all the time__ in your _loop()_, as else clients will disconnect.
 
 ## void setTallySources(uint8_t _tallySources_)
 Set the number of tally sources to send to clients. Must be less than 21.
@@ -38,6 +39,8 @@ Flag value | Flag meaning
 0 | No tally
 1 | Program
 2 | Preview
+
+Note: The updated falgs wont be sent until _rudLoop()_ has ben called, so you can safely update multiple falgs before sending the updated state.  
 
 ## void resetTallyFlags()
 Set all Tally Flags to 0 (No tally)

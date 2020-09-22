@@ -40,7 +40,7 @@ Flag value | Flag meaning
 1 | Program
 2 | Preview
 
-Note: The updated falgs wont be sent until _rudLoop()_ has ben called, so you can safely update multiple falgs before sending the updated state.  
+Note: The updated falgs wont be sent until _runLoop()_ has ben called, so you can safely update multiple falgs before sending the updated state.  
 
 ## void resetTallyFlags()
 Set all Tally Flags to 0 (No tally)

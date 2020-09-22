@@ -1,7 +1,7 @@
 # TallyServer libraby
-This TallyServer library allows Clients running Skårhøj's (<https://skaarhoj.com>) Arduino libraries
-for ATEM switchers to connect and retrieve tally data. This is useful as ATEM switchers only allow
-for 5-8 connections (depending on the model), and you might need more tally lights than that. 
+This TallyServer library allows Clients running Skårhøj's (<https://skaarhoj.com>) [ATEM libraries for Arduino](https://github.com/kasperskaarhoj/SKAARHOJ-Open-Engineering/tree/master/ArduinoLibs) to connect and retrieve tally data. This is useful as ATEM switchers only allow for 5-8 connections (depending on the model), and you might need more tally lights than that.
+
+This library can also be used for creating a tally system for other platforms, if you get tally data from another data source and use this librabry to transmit the data to your tally lights. Again, the tally lights need to run [Skårhøj's ATEM libraries for Arduino](https://github.com/kasperskaarhoj/SKAARHOJ-Open-Engineering/tree/master/ArduinoLibs). 
 
 The library supports:
 - Arduino boards with an Ethernet module or ESP8266 WiFi module.

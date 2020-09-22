@@ -41,7 +41,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define TALLY_SERVER_BUFFER_LENGTH  42 //Max 42: Header = 12 + cmdHeader = 8 + tallySources = 2 + max 20 tally flags
 
-#define TALLY_SERVER_MAX_CLIENTS    5
+#define TALLY_SERVER_DEFAULT_MAX_CLIENTS    5
 
 #define TALLY_SERVER_KEEP_ALIVE_MSG_INTERVAL 1500
 
@@ -68,7 +68,9 @@ private:
 
     uint8_t _buffer[TALLY_SERVER_BUFFER_LENGTH];
 
-    struct TallyClient _clients[TALLY_SERVER_MAX_CLIENTS];
+    TallyClient* _clients;
+    int _maxClients = 0; 
+
 
     uint16_t _atemTallySources;
     uint8_t _atemTallyFlags[21];
@@ -93,6 +95,7 @@ private:
 
 public:
     TallyServer();
+    TallyServer(int maxClients);
     void begin();
     void end();
     void runLoop();

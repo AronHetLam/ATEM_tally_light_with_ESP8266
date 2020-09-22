@@ -20,14 +20,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "TallyServer.h"
 
-TallyServer::TallyServer() {
-#if defined ESP8266 || defined ESP32
-    WiFiUDP Udp;
-#else
-    EthernetUDP Udp;
-#endif
+TallyServer::TallyServer() : TallyServer(TALLY_SERVER_DEFAULT_MAX_CLIENTS) { }
+
+TallyServer::TallyServer(int maxClients) {
+    #if defined ESP8266 || defined ESP32
+        WiFiUDP Udp;
+    #else
+        EthernetUDP Udp;
+    #endif
 
     _udp = Udp;
+
+    _clients = new TallyServer::TallyClient[maxClients];
+    _maxClients = maxClients;
 }
 
 /**
@@ -43,7 +48,7 @@ void TallyServer::begin() {
 void TallyServer::end() {
     _udp.stop();
 
-    for (int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) _resetClient(&_clients[i]);
+    for (int i = 0; i < _maxClients; i++) _resetClient(&_clients[i]);
 }
 
 /** 
@@ -225,7 +230,7 @@ void TallyServer::runLoop() {
         uint16_t cmdLen = 12 + _createTallyDataCmd();
 
         //We build a client specific header and send the packet, if it's initialized
-        for(int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) {
+        for(int i = 0; i < _maxClients; i++) {
             TallyClient *client = &_clients[i];
             if(client->_isInitialized) {
                 _createHeader(client, TALLY_SERVER_FLAG_ACK_REQUEST, cmdLen);
@@ -239,7 +244,7 @@ void TallyServer::runLoop() {
     /**
      * Keep connections alive by requesting ACK packages form them wtih a given interval
      */
-    for(int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) {
+    for(int i = 0; i < _maxClients; i++) {
         TallyClient *client = &_clients[i];
         if(client->_isInitialized) {
             if(client->_lastAckedID < client->_localPacketIdCounter && _hasTimePassed(client->_lastSend, 250)) {
@@ -357,7 +362,7 @@ uint16_t TallyServer::_createTallyDataCmd() {
  */
 TallyServer::TallyClient *TallyServer::_getTallyClient(IPAddress clientIP, uint16_t clientPort) {
     int8_t emptySpot = -1;
-    for (int i = 0; i < TALLY_SERVER_MAX_CLIENTS; i++) {
+    for (int i = 0; i < _maxClients; i++) {
         if (_clients[i]._isConnected && _clients[i]._tallyIP == clientIP && _clients[i]._tallyPort == clientPort) {
             return &_clients[i];
         } else if (emptySpot < 0 && !_clients[i]._isConnected) {

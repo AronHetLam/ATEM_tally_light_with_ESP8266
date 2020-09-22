@@ -1,3 +1,15 @@
+# TallyServer libraby
+This TallyServer library allows Clients running Skårhøj's (<https://skaarhoj.com>) Arduino libraries
+for ATEM switchers to connect and retrieve tally data. This is useful as ATEM switchers only allow
+for 5-8 connections (depending on the model), and you might need more tally lights than that. 
+
+The library supports:
+- Arduino boards with an Ethernet module or ESP8266 WiFi module.
+- Stand Alone ESP8266 modeules.
+- Stand Alone ESP32 modules.
+
+The default constructor limits the TallyServer to accept 5 clients, as this is what the ESP8266 can handle. By using the __TallyServer(int _maxClients_)__ constructor you can raise the limit, as an ESP32 would be able to handle more clients at once, since it's a more powerful microprocessor.
+
 # TallyServer documentation
 Documentation for public methods (to be used in Arduino sketches)
 

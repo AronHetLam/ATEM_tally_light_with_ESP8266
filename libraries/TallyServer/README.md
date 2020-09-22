@@ -34,6 +34,7 @@ _tallyIndex_ - the tally index to set tally flag for
 _tallyFlag_ - the tally flag to set for the given index
 
 Flag value | Flag meaning
+--|----------------------
 0 | No tally
 1 | Program
 2 | Preview

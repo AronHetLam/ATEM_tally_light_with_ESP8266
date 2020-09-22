@@ -6,7 +6,7 @@ This library can also be used for creating a tally system for other platforms, i
 The library supports:
 - Arduino boards with an Ethernet module or ESP8266 WiFi module.
 - Stand Alone ESP8266 modeules.
-- Stand Alone ESP32 modules.
+- Stand Alone ESP32 modules. (Skårhøj's libraries doesn't support this natively. Use my version of the [ATEMbase](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/tree/master/libraries) library that fixes this)
 
 The default constructor limits the TallyServer to accept 5 clients, as this is what the ESP8266 can handle. By using the __TallyServer(int _maxClients_)__ constructor you can raise the limit, as an ESP32 would be able to handle more clients at once, since it's a more powerful microprocessor.
 

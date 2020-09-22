@@ -237,6 +237,7 @@ void loop() {
     server.handleClient();
 }
 
+//Handle the change of states in the program
 void changeState(uint8_t stateToChangeTo) {
     firstRun = true;
     switch (stateToChangeTo) {
@@ -255,19 +256,23 @@ void changeState(uint8_t stateToChangeTo) {
     }
 }
 
+//Set the color of both LEDs
 void setBothLEDs(uint8_t color) {
     setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
     setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
 }
 
+//Set the color of the 1st LED
 void setLED1(uint8_t color) {
     setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
 }
 
+//Set the color of the 2nd LED
 void setLED2(uint8_t color) {
     setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
 }
 
+//Set the color of a LED using the given pins
 void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
     switch (color) {
         case LED_OFF:

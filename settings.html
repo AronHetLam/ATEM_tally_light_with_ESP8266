@@ -16,21 +16,17 @@
         var myLength = target.value.length;
         if (myLength >= maxLength) {
             var next = target.nextElementSibling;
-            while (next != null) {
+            if (next != null) {
                 if (next.className.includes("IP")) {
                     next.focus();
-                    break;
                 }
-                next = next.nextElementSibling
             }
         } else if (myLength == 0) {
             var previous = target.previousElementSibling;
-            while (previous != null) {
+            if (previous != null) {
                 if (previous.className.includes("IP")) {
                     previous.focus();
-                    break;
                 }
-                previous = previous.previousElementSibling;
             }
         }
     }
@@ -69,81 +65,91 @@
 </script>
 
 <body style="font-family:Verdana; white-space:nowrap;" onload="load()">
-    <table bgcolor="#777777" border="0" width="100%" cellpadding="1" style=color:#ffffff;font-size:12px;">
-        <tr>
-            <td>
-                <h1>Tally Light setup</h1>
+    <table cellpadding="2" style="width:100%">
+        <tr bgcolor="#777777" style="color:#ffffff;font-size:12px;">
+            <td colspan="3">
+                <h1>&nbsp;Tally Light setup</h1>
+                <h2>&nbsp;Status:</h2>
             </td>
         </tr>
         <tr>
-            <td>
-                <h2>Status:</h2>
-            </td>
+            <td><br></td>
+            <td></td> 
+            <td style="width: 100%;"></td>
         </tr>
-    </table><br>
-
-    <table>
         <tr>
             <td>Connection Status:</td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td>Network name (SSID):</td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td><br></td>
         </tr>
         <tr>
             <td>Signal strength:</td>
-            <td>@</td>
+            <td colspan="2">@ dBm</td>
         </tr>
         <tr>
             <td>Static IP:</td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td>Tally Light IP:</td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td>Subnet mask: </td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td>Gateway: </td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td><br></td>
         </tr>
         <tr>
             <td>ATEM switcher status:</td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
         <tr>
             <td>ATEM switcher IP:</td>
-            <td>@</td>
+            <td colspan="2">@</td>
         </tr>
-    </table><br>
-
-    <table bgcolor="#777777" border="0" width="100%" cellpadding="1" style="color:#ffffff;font-size:12px;">
-        <td>
-            <h2>Settings:</h2>
-        </td>
+        <tr>
+            <td><br></td>
         </tr>
-    </table><br>
-
-    <table>
+        <tr bgcolor="#777777" style="color:#ffffff;font-size:12px;">
+            <td colspan="3">
+                <h2>&nbsp;Settings:</h2>
+            </td>
+        </tr>
+        <tr>
+            <td><br></td>
+        </tr>
         <form action="/save" method="post">
             <tr>
                 <td>Tally Light name: </td>
-                <td><input type="text" size="30" maxlength="30" name="tName" value="@" required>
+                <td>
+                    <input type="text" size="30" maxlength="30" name="tName" value="@" required />
                 </td>
             </tr>
             <tr>
-                <td>Tally Light mode: </td>
-                <td><select name="tMode">
+                <td><br></td>
+            </tr>
+            <tr>
+                <td>Tally Light number: </td>
+                <td>
+                    <input type="number" size="5" min="1" max="21" name="tNo" value="@" required />
+                </td>
+            </tr>
+            <tr>
+                <td>Tally Light mode (LED 1):&nbsp;</td>
+                <td>
+                    <select name="tModeLED1">
                         <option value="@">Normal</option>
                         <option value="@">Preview stay on</option>
                         <option value="@">Program only</option>
@@ -151,8 +157,13 @@
                 </td>
             </tr>
             <tr>
-                <td>Tally Light number: </td>
-                <td><input type="number" size="5" min="1" max="21" name="tNo" value="@" required>
+                <td>Tally Light mode (LED 2):</td>
+                <td>
+                    <select name="tModeLED2">
+                        <option value="@">Normal</option>
+                        <option value="@">Preview stay on</option>
+                        <option value="@">Program only</option>
+                    </select>
                 </td>
             </tr>
             <tr>
@@ -160,12 +171,14 @@
             </tr>
             <tr>
                 <td>Network name (SSID): </td>
-                <td><input type="text" size="30" maxlength="30" name="ssid" value="@" required>
+                <td>
+                    <input type="text" size="30" maxlength="30" name="ssid" value="@" required />
                 </td>
             </tr>
             <tr>
                 <td>Network password: </td>
-                <td><input type="password" size="30" maxlength="30" name="pwd" pattern="^$|.{8,32}" value="@">
+                <td>
+                    <input type="password" size="30" maxlength="30" name="pwd" pattern="^$|.{8,32}" value="@" />
                 </td>
             </tr>
             <tr>
@@ -176,43 +189,46 @@
                 <td>
                     <input id="staticIPHidden" type="hidden" name="staticIP" value="false" />
                     <input id="staticIP" type="checkbox" name="staticIP" value="true" onchange="toggleStaticIPFields()"
-                        @checked />
+                        @ />
                 </td>
             </tr>
             <tr>
                 <td>Tally Light IP: </td>
-                <td><input class="tIP" type="text" size="3" maxlength="3" name="tIP1" pattern="\d{0,3}" value="@"
-                        required>.
+                <td>
+                    <input class="tIP" type="text" size="3" maxlength="3" name="tIP1" pattern="\d{0,3}" value="@"
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="tIP2" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="tIP3" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="tIP4" pattern="\d{0,3}" value="@"
-                        required>
+                        required />
                 </td>
             </tr>
             <tr>
                 <td>Subnet mask: </td>
-                <td><input class="tIP" type="text" size="3" maxlength="3" name="mask1" pattern="\d{0,3}" value="@"
-                        required>.
+                <td>
+                    <input class="tIP" type="text" size="3" maxlength="3" name="mask1" pattern="\d{0,3}" value="@"
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="mask2" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="mask3" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="mask4" pattern="\d{0,3}" value="@"
-                        required>
+                        required />
                 </td>
             </tr>
             <tr>
                 <td>Gateway: </td>
-                <td><input class="tIP" type="text" size="3" maxlength="3" name="gate1" pattern="\d{0,3}" value="@"
-                        required>.
+                <td>
+                    <input class="tIP" type="text" size="3" maxlength="3" name="gate1" pattern="\d{0,3}" value="@"
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="gate2" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="gate3" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="tIP" type="text" size="3" maxlength="3" name="gate4" pattern="\d{0,3}" value="@"
-                        required>
+                        required />
                 </td>
             </tr>
             <tr>
@@ -220,14 +236,15 @@
             </tr>
             <tr>
                 <td>ATEM switcher IP: </td>
-                <td><input class="IP" type="text" size="3" maxlength="3" name="aIP1" pattern="\d{0,3}" value="@"
-                        required>.
+                <td>
+                    <input class="IP" type="text" size="3" maxlength="3" name="aIP1" pattern="\d{0,3}" value="@"
+                        required />.
                     <input class="IP" type="text" size="3" maxlength="3" name="aIP2" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="IP" type="text" size="3" maxlength="3" name="aIP3" pattern="\d{0,3}" value="@"
-                        required>.
+                        required />.
                     <input class="IP" type="text" size="3" maxlength="3" name="aIP4" pattern="\d{0,3}" value="@"
-                        required>
+                        required />
             </tr>
             <tr>
                 <td><br></td>

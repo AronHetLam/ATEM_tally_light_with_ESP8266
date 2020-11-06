@@ -340,8 +340,24 @@ ATEMmin::ATEMmin(){}
 					}
 		
 				}
-			} else 
-			{}
+			}
+			/**
+			 * Added by Aron N. Het Lam
+			 * Functionality to parse and retrieve streaming status.
+			 */
+		else 
+			if(!strcmp_P(cmdStr, PSTR("StRS"))) {
+				#if ATEM_debug
+				temp = streaming;
+				#endif
+				streamingStatusFlags = word(_packetBuffer[0], _packetBuffer[1]);
+				#if ATEM_debug
+				if ((_serialOutput==0x80 && streaming!=temp) || (_serialOutput==0x81 && !hasInitialized()))	{
+					Serial.print(F("sreaming = "));
+					Serial.println(streaming);
+				}
+				#endif
+			}
 		}
 
 
@@ -631,4 +647,53 @@ ATEMmin::ATEMmin(){}
 			 */
 			uint8_t ATEMmin::getTallyByIndexTallyFlags(uint16_t sources) {
 				return atemTallyByIndexTallyFlags[sources];
+			}
+			
+			/**
+			 * Get raw streaming staus flags
+			 */
+			uint16_t ATEMmin::getStreamingStatusFlags() {
+				return streamingStatusFlags;
+			}
+
+			/**
+			 * Get streaming status stream is idle flag
+			 */
+			bool ATEMmin::getStreamIdle() {
+				return streamingStatusFlags & 1 << 0;
+			}
+
+			/**
+			 * Get streaming status stream is connecting flag
+			 */
+			bool ATEMmin::getStreamConnecting() {
+				return streamingStatusFlags & 1 << 1;
+			}
+
+			/**
+			 * Get streaming status is streaming falg
+			 */
+			bool ATEMmin::getStreamStreaming() {
+				return streamingStatusFlags & 1 << 2;
+			}
+
+			/**
+			 * Get streaming status stream in invalid state falg
+			 */
+			bool ATEMmin::getStreamInvalidState() {
+				return streamingStatusFlags & 1 << 4;
+			}
+
+			/**
+			 * Get streaming status stream stopping falg (still streaming if true)
+			 */
+			bool ATEMmin::getStreamStopping() {
+				return streamingStatusFlags & 1 << 5;
+			}
+
+			/**
+			 * Get streaming status unkown streaming error flag
+			 */
+			bool ATEMmin::getStreamUnknownError() {
+				return streamingStatusFlags & 1 << 15;
 			}

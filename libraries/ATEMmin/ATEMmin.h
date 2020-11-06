@@ -79,6 +79,7 @@ private:
 			uint16_t atemAuxSourceInput[6];
 			uint16_t atemTallyByIndexSources;
 			uint8_t atemTallyByIndexTallyFlags[21];
+			uint16_t streamingStatusFlags; //Added by Aron N. Het Lam
 
 public:
 			// Public Methods in ATEM.h:
@@ -108,6 +109,15 @@ public:
 			void setAuxSourceInput(uint8_t aUXChannel, uint16_t input);
 			uint16_t getTallyByIndexSources();
 			uint8_t getTallyByIndexTallyFlags(uint16_t sources);
+
+			//Added by Aron N. Het Lam
+			uint16_t getStreamingStatusFlags();
+			bool getStreamIdle();
+			bool getStreamConnecting();
+			bool getStreamStreaming();
+			bool getStreamInvalidState();
+			bool getStreamStopping();
+			bool getStreamUnknownError();
 };
 
 #endif

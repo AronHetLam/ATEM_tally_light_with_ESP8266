@@ -7,7 +7,7 @@ Wireless tally light for use with ATEM switchers. Connects over WiFi using only 
 
 Should easily be convertable to use with regular Arduino boards and an ESP8266 module, by changeing the include statements and a few other things (however, this is not tested).
 
-__DIY guide__ is available in the [wiki](https://github.com/c/ATEM_tally_light_with_ESP8266/wiki/DIY-guide).
+__DIY guide__ is available in the [wiki](https://github.com/bfbones/ATEM_tally_light_with_ESP8266/wiki/DIY-guide).
 
 # What does it do?
 Once set up, it will automatically connect to an ATEM switcher over WiFi and function as a tally light.

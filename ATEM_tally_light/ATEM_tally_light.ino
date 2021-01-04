@@ -18,22 +18,15 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define FASTLED_ESP8266_DMA
+
 //Include libraries:
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 #include <ATEMmin.h>
 #include <TallyServer.h>
-
-//Define LED1 color pins
-#define PIN_RED1    D0
-#define PIN_GREEN1  D2
-#define PIN_BLUE1   D1
-
-//Define LED2 color pins
-#define PIN_RED2    D4
-#define PIN_GREEN2  D5
-#define PIN_BLUE2   D6
+#include <FastLED.h>
 
 //Define LED colors
 #define LED_OFF     0
@@ -43,6 +36,10 @@
 #define LED_YELLOW  4
 #define LED_PINK    5
 #define LED_WHITE   6
+#define LED_ORANGE  7
+
+//Map "old" LED colors to CRGB colors
+int color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Pink, CRGB::White, CRGB::Orange };
 
 //Define states
 #define STATE_STARTING                  0
@@ -54,6 +51,11 @@
 #define MODE_NORMAL                     1
 #define MODE_PREVIEW_STAY_ON            2
 #define MODE_PROGRAM_ONLY               3
+
+//FastLED
+#define DATA_PIN      D7
+#define NUM_LEDS      12
+CRGB leds[NUM_LEDS];
 
 //Initialize global variables
 ESP8266WebServer server(80);
@@ -80,19 +82,37 @@ struct Settings {
 Settings settings;
 
 bool firstRun = true;
+bool activeCam = false;
+bool activeCamPreview = false;
+
+int lastActive = -1;
+int lastSet = -1;
+
+unsigned long currentMillis = 0;
+unsigned long previousMillis = 0;
+bool changePreview = false;
+
+long mixRate = 3000;
+long secLoop = 0;
+int lowLedCount = 0;
+bool lowLedOn = false;
+
+double uBatt = 0;
+char buffer[3];
 
 //Perform initial setup on power on
 void setup() {
-    //Init pins for LED
-    pinMode(PIN_RED1, OUTPUT);
-    pinMode(PIN_GREEN1, OUTPUT);
-    pinMode(PIN_BLUE1, OUTPUT);
+    //Setup current measuring pin
+    pinMode(A0, INPUT);
 
-    pinMode(PIN_RED2, OUTPUT);
-    pinMode(PIN_GREEN2, OUTPUT);
-    pinMode(PIN_BLUE2, OUTPUT);
+    //Initialize LED strip
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
-    setBothLEDs(LED_BLUE);
+    setSTRIP(LED_OFF);
+
+    //Set LED Status
+    setStatusLED(LED_YELLOW);
+    FastLED.show();
 
     //Start Serial
     Serial.begin(115200);
@@ -153,7 +173,8 @@ void loop() {
                     firstRun = false;
                     WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                     WiFi.softAP("Tally Light setup");
-                    setBothLEDs(LED_WHITE);
+                    setStatusLED(LED_WHITE);
+                    FastLED.show();
                 }
             }
             break;
@@ -178,6 +199,41 @@ void loop() {
         case STATE_RUNNING:
             //Handle data exchange and connection to swithcher
             atemSwitcher.runLoop();
+            
+            //Get current set transition time of "mix" transition for switching back preview
+            mixRate = round((atemSwitcher.getTransitionMixRate(0)*33.33))*0.02;
+            
+            //Main loop for things that should work every second
+            if(secLoop >= 400) {
+              //Get and calculate battery current
+              int raw = analogRead(A0);
+              uBatt=(double)raw/1023*4.2;
+
+              //Set back status LED after one second to working LED_BLUE if it was changed by anything
+              if(lowLedOn) {
+                setStatusLED(LED_BLUE);
+                lowLedOn = false;
+              }
+
+              //Blink every 5 seconds for one second if battery current is under 3.6V
+              if(lowLedCount >= 5 && uBatt <= 3.600) {
+                setStatusLED(LED_YELLOW);
+                lowLedOn = true;
+                lowLedCount = 0;
+              }
+              lowLedCount++;
+
+              //Turn stripes of and put ESP to deepsleep if battery is too low
+              if(uBatt <= 3.499) {
+                setSTRIP(LED_OFF);
+                setStatusLED(LED_OFF);
+                FastLED.show();
+                ESP.deepSleep(0, WAKE_NO_RFCAL);
+              }
+
+              secLoop = 0;
+            }
+            secLoop++;
 
             int tallySources = atemSwitcher.getTallyByIndexSources();
             tallyServer.setTallySources(tallySources);
@@ -188,32 +244,60 @@ void loop() {
             //Handle Tally Server
             tallyServer.runLoop();
 
-            //Set tally light accordingly
+            //Set bool for active cam 
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
-                setLED1(LED_RED);
-            } else if ((!(settings.tallyModeLED1 == MODE_PROGRAM_ONLY))                             //if not program only
-                       && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
-                           || settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
-                setLED1(LED_GREEN);
-            } else {                                                                            // If tally is neither
-                setLED1(LED_OFF);
+              activeCam = true;
+
+              //When active cam became true run a small logic to switch preview cam also to active cam to disable all other lights
+              if(activeCamPreview) {
+                changePreview = true;
+                currentMillis = 0;
+              }
+            } else {
+              activeCam = false;
             }
 
-            //Set tally light LED 2 accordingly
-            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
-                setLED2(LED_RED);
-            } else if ((!(settings.tallyModeLED2 == MODE_PROGRAM_ONLY))                             //if not program only
-                       && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
-                           || settings.tallyModeLED2 == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
-                setLED2(LED_GREEN);
-            } else {                                                                            // If tally is neither
-                setLED2(LED_OFF);
+            //Switch preview cam to active cam after the correct amount of time
+            if (changePreview) {
+              currentMillis++;
+              
+              if (currentMillis >= mixRate) {
+                setActive(atemSwitcher.getProgramInputVideoSource(0));
+                changePreview = false;
+              }
             }
+
+            //set last active cam to current cam if no preview switching is in progress (after it is done)
+            if(!changePreview) {
+              lastActive = atemSwitcher.getProgramInputVideoSource(0);
+            }
+
+            //Set bool for preview cam
+            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02) {   //and tally preview
+              activeCamPreview = true;
+            } else {
+              activeCamPreview = false;
+            }
+
+            //Set tally light accordingly
+            if (activeCam) {              //if tally live
+                setSTRIP(LED_RED);
+            } else if ((!(settings.tallyModeLED1 == MODE_PROGRAM_ONLY))                             //if not program only
+                       && ((activeCamPreview)                                                       //and tally preview
+                           || settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
+                setSTRIP(LED_GREEN);
+            } else {                                                                            // If tally is neither
+                setSTRIP(LED_OFF);
+            }
+
+            //Show LED Strip changes
+            FastLED.show();
 
             //Switch state if connection is lost, dependant on which connection is lost.
             if (WiFi.status() != WL_CONNECTED) {
                 Serial.println("------------------------");
                 Serial.println("WiFi connection lost...");
+                setSTRIP(LED_OFF);
                 changeState(STATE_CONNECTING_TO_WIFI);
 
                 //Force atem library to reset connection, in order for status to read correctly on website.
@@ -225,6 +309,7 @@ void loop() {
             } else if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
                 Serial.println("------------------------");
                 Serial.println("Connection to Switcher lost...");
+                setSTRIP(LED_OFF);
                 changeState(STATE_CONNECTING_TO_SWITCHER);
 
                 //Reset tally server's tally flags, so clients turn off their lights.
@@ -243,74 +328,49 @@ void changeState(uint8_t stateToChangeTo) {
     switch (stateToChangeTo) {
         case STATE_CONNECTING_TO_WIFI:
             state = STATE_CONNECTING_TO_WIFI;
-            setBothLEDs(LED_BLUE);
+            setStatusLED(LED_YELLOW);
             break;
         case STATE_CONNECTING_TO_SWITCHER:
             state = STATE_CONNECTING_TO_SWITCHER;
-            setBothLEDs(LED_PINK);
+            setStatusLED(LED_ORANGE);
             break;
         case STATE_RUNNING:
             state = STATE_RUNNING;
-            setBothLEDs(LED_GREEN);
+            setStatusLED(LED_BLUE);
             break;
     }
+    FastLED.show();
 }
 
-//Set the color of both LEDs
-void setBothLEDs(uint8_t color) {
-    setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
-    setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
+//Set current cam as preview cam to disable lights on all other tallys
+void setActive(uint8_t camNumber) {
+  Serial.println("---------------------");
+  Serial.println(lastActive);
+  Serial.println(lastSet);
+  Serial.println(camNumber);
+  if(lastActive != lastSet) {
+      atemSwitcher.setPreviewInputVideoSource(0, camNumber);
+      lastSet = camNumber;
+  }
 }
 
 //Set the color of the 1st LED
-void setLED1(uint8_t color) {
-    setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
-}
-
-//Set the color of the 2nd LED
-void setLED2(uint8_t color) {
-    setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
-}
-
-//Set the color of a LED using the given pins
-void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
-    switch (color) {
-        case LED_OFF:
-            digitalWrite(pinRed, 0);
-            digitalWrite(pinGreen, 0);
-            digitalWrite(pinBlue, 0);
-            break;
-        case LED_RED:
-            digitalWrite(pinRed, 1);
-            digitalWrite(pinGreen, 0);
-            digitalWrite(pinBlue, 0);
-            break;
-        case LED_GREEN:
-            digitalWrite(pinRed, 0);
-            digitalWrite(pinGreen, 1);
-            digitalWrite(pinBlue, 0);
-            break;
-        case LED_BLUE:
-            digitalWrite(pinRed, 0);
-            digitalWrite(pinGreen, 0);
-            digitalWrite(pinBlue, 1);
-            break;
-        case LED_YELLOW:
-            digitalWrite(pinRed, 1);
-            digitalWrite(pinGreen, 1);
-            digitalWrite(pinBlue, 0);
-            break;
-        case LED_PINK:
-            digitalWrite(pinRed, 1);
-            digitalWrite(pinGreen, 0);
-            analogWrite(pinBlue, 0xff);
-            break;
-        case LED_WHITE:
-            digitalWrite(pinRed, 1);
-            digitalWrite(pinGreen, 1);
-            digitalWrite(pinBlue, 1);
-            break;
+void setSTRIP(uint8_t color) {
+    int color_led[3] = { CRGB::Black, CRGB::Red, CRGB::Green };
+  
+    for (int i = 0; i < (NUM_LEDS-1); i++) {
+      leds[i] = color_led[color];
     }
+}
+
+//Set the single status LED (last LED)
+void setStatusLED(uint8_t color) {
+  leds[11] = color_led[color];
+  if(color == LED_BLUE) {
+    leds[11].fadeToBlackBy(230);
+  } else {
+    leds[11].fadeToBlackBy(0);
+  }
 }
 
 //Serve setup web page to client, by sending HTML with the correct variables
@@ -341,7 +401,9 @@ void handleRoot() {
     html += WiFi.SSID();
     html += "</td> </tr> <tr> <td><br></td> </tr> <tr> <td>Signal strength:</td> <td colspan=\"2\">";
     html += WiFi.RSSI();
-    html += " dBm</td> </tr> <tr> <td>Static IP:</td> <td colspan=\"2\">";
+    html += " dBm</td> </tr> <tr> <td><br></td> </tr> <tr> <td>Battery voltage:</td> <td colspan=\"2\">";
+    html += dtostrf(uBatt, 0, 3, buffer);
+    html += " V</td> </tr> <tr> <td>Static IP:</td> <td colspan=\"2\">";
     html += settings.staticIP == true ? "True" : "False";
     html += "</td> </tr> <tr> <td>Tally Light IP:</td> <td colspan=\"2\">";
     html += WiFi.localIP().toString();

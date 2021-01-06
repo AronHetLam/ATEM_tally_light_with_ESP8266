@@ -74,7 +74,7 @@
         </tr>
         <tr>
             <td><br></td>
-            <td></td> 
+            <td></td>
             <td style="width: 100%;"></td>
         </tr>
         <tr>
@@ -91,6 +91,13 @@
         <tr>
             <td>Signal strength:</td>
             <td colspan="2">@ dBm</td>
+        </tr>
+        <tr>
+            <td><br></td>
+        </tr>
+        <tr>
+            <td>Battery voltage:</td>
+            <td colspan="2">@ V</td>
         </tr>
         <tr>
             <td>Static IP:</td>
@@ -163,6 +170,22 @@
                         <option value="@">Normal</option>
                         <option value="@">Preview stay on</option>
                         <option value="@">Program only</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Amount of Neopixels:</td>
+                <td>
+                    <input type="number" size="5" min="0" max="4096" name="neoPxAmount" value="@" required />
+                </td>
+            </tr>
+            <tr>
+                <td>Neopixel status LED: </td>
+                <td>
+                    <select name="neoPxStatus">
+                        <option value="@">First LED</option>
+                        <option value="@">Last LED</option>
+                        <option value="@">None</option>
                     </select>
                 </td>
             </tr>

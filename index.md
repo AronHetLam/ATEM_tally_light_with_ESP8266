@@ -12,7 +12,7 @@ Once the program is uploaded to the ESP8266 the setup is done with a webpage it 
 
 As Atem swithcers only allow for 5-8 simultanious clients (dependant on the model) v2.0 introduced Tally Server functionality. This makes the system only require one connection from the switcher, as the tally lights can retransmit data to other tallys. An example setup is shown in the diagram below, where arrows indicate the direction of tally data from swtcher/tally unit to client tally unit.
 
-![Image](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/blob/master/Wiki/DIY_guide/img/Example_setup.jpg)
+![Example_setup](https://user-images.githubusercontent.com/5564813/104715918-74cf0f00-5727-11eb-9cac-d05d2b88414c.jpg)
 
 NOTE: As this brings a lot of flexibility with how to connect the units, bear in mind that the ESP8266 isn't that powerful, and is limited to 5 clients each. (In some cases 5 might even be too many).
 

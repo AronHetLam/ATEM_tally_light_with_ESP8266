@@ -19,7 +19,7 @@ NOTE: As this brings a lot of flexibility with how to connect the units, bear in
 ## Connection and tally state indication
 The different states of connection is signalled with LED colors.
 | Color | Description |
-| :-------- | :-------------- |
+| -------- | -------------- |
 BLUE | Connecting to WiFi
 WHITE | Unable to connect to WiFi - serves softAP "Tally light setup", while still trying to connect.
 PINK | Connecting to ATEM Swithcher. (Connected to WiFi)
@@ -29,6 +29,7 @@ OFF | Tally neither live or preview (or no power...)
 
 ## Modes of operation
 By default the tally light works as a normal tally light would in a professional enviroment. However, as I in my personal use case needed it to work a bit differently, I added the following modes of oparation for convenience.
+
 Mode | Description
 -----|------------
 Normal | As describen in the above table.

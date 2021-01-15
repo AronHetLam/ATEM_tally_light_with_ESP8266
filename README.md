@@ -1,4 +1,8 @@
 # ATEM-tally-light
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/AronHetLam/ATEM_tally_light_with_ESP8266)
+![GitHub](https://img.shields.io/github/license/AronHetLam/ATEM_tally_light_with_ESP8266)
+
 Wireless tally light for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED. This solution is __not__ limited by the ATEM switchers' connection limit, making it possible to connect as many as you need.
 
 Should easily be convertable to use with regular Arduino boards and an ESP8266 module, by changeing the include statements and a few other things (however, this is not tested).
@@ -18,6 +22,7 @@ NOTE: As this brings a lot of flexibility with how to connect the units, bear in
 
 ## Connection and tally state indication
 The different states of connection is signalled with LED colors.
+
 Color | Description
 ------|--------
 BLUE | Connecting to WiFi
@@ -29,6 +34,7 @@ OFF | Tally neither live or preview (or no power...)
 
 ## Modes of operation
 By default the tally light works as a normal tally light would in a professional enviroment. However, as I in my personal use case needed it to work a bit differently, I added the following modes of oparation for convenience.
+
 Mode | Description
 -----|------------
 Normal | As describen in the above table.

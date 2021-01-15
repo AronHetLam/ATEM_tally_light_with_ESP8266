@@ -1,7 +1,7 @@
 # ATEM-tally-light
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/AronHetLam/ATEM_tally_light_with_ESP8266)
-![GitHub](https://img.shields.io/github/license/AronHetLam/ATEM_tally_light_with_ESP8266)
+[![GitHub release](https://img.shields.io/github/v/release/AronHetLam/ATEM_tally_light_with_ESP8266)](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/releases/latest)
+[![License](https://img.shields.io/github/license/AronHetLam/ATEM_tally_light_with_ESP8266)](LICENSE)
 
 Wireless tally light for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED. This solution is __not__ limited by the ATEM switchers' connection limit, making it possible to connect as many as you need.
 

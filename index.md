@@ -19,7 +19,7 @@ NOTE: As this brings a lot of flexibility with how to connect the units, bear in
 ## Connection and tally state indication
 The different states of connection is signalled with LED colors.
 | Color | Description |
---------|--------------
+| :-------- | :-------------- |
 BLUE | Connecting to WiFi
 WHITE | Unable to connect to WiFi - serves softAP "Tally light setup", while still trying to connect.
 PINK | Connecting to ATEM Swithcher. (Connected to WiFi)

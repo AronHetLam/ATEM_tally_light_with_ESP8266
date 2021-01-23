@@ -21,12 +21,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "TallyServer.h"
 
 /**
- * Contruct TallyServer with default capacity of 5 clients
+ * Construct TallyServer with default capacity of 5 clients
  */
 TallyServer::TallyServer() : TallyServer(TALLY_SERVER_DEFAULT_MAX_CLIENTS) { }
 
 /**
- * Contruct TallyServer with a client capacity of maxClinents 
+ * Construct TallyServer with a client capacity of maxClinents
  */
 TallyServer::TallyServer(int maxClients) {
     #if defined ESP8266 || defined ESP32
@@ -313,10 +313,10 @@ void TallyServer::runLoop() {
 }
 
 /** 
- * Set the number of tally sources to send to clients. Must be less than 21.
+ * Set the number of tally sources to send to clients. Must be less than TALLY_SERVER_MAX_TALLY_FLAGS.
  */
 void TallyServer::setTallySources(uint8_t tallySources) {
-    if(tallySources < 21)
+    if(tallySources < TALLY_SERVER_MAX_TALLY_FLAGS)
         _atemTallySources = tallySources;
 }
 
@@ -324,7 +324,7 @@ void TallyServer::setTallySources(uint8_t tallySources) {
  * Set tally flag to send to clients
  */
 void TallyServer::setTallyFlag(uint8_t tallyIndex, uint8_t tallyFlag) {
-    if (tallyIndex < 21 && _atemTallyFlags[tallyIndex] != tallyFlag) {
+    if (tallyIndex < TALLY_SERVER_MAX_TALLY_FLAGS && _atemTallyFlags[tallyIndex] != tallyFlag) {
         _atemTallyFlags[tallyIndex] = tallyFlag;
         _tallyFlagsChanged = true;
     }
@@ -336,7 +336,7 @@ void TallyServer::setTallyFlag(uint8_t tallyIndex, uint8_t tallyFlag) {
  * return the commands length.
  */
 uint16_t TallyServer::_createTallyDataCmd() {
-    uint16_t cmdLen = 10 + _atemTallySources; //header = 8 + num sources = 2 + *num sources*
+    uint16_t cmdLen = 10 + _atemTallySources; //header = 8 + 2 (num sources) + *num sources*
 
     //Cmd Length
     _buffer[12] = cmdLen >> 8;
@@ -471,5 +471,5 @@ bool TallyServer::_hasTimePassed(unsigned long timestamp, uint16_t interval) {
  * Set all _atemTallyFlags to 0
  */
 void TallyServer::resetTallyFlags() {
-    memset(_atemTallyFlags, 0, 21);
+    memset(_atemTallyFlags, 0, TALLY_SERVER_MAX_TALLY_FLAGS);
 }

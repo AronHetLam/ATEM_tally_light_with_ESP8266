@@ -39,6 +39,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define TALLY_SERVER_FLAG_CONNECTION_REJECTED   0b00000100
 #define TALLY_SERVER_FLAG_CONNECTION_LOST       0b00001000
 
+#define TALLY_SERVER_MAX_TALLY_FLAGS    41
+
 #define TALLY_SERVER_BUFFER_LENGTH  42 //Max 42: Header = 12 + cmdHeader = 8 + tallySources = 2 + max 20 tally flags
 
 #define TALLY_SERVER_DEFAULT_MAX_CLIENTS    5
@@ -72,7 +74,7 @@ private:
     int _maxClients = 0; 
 
     uint16_t _atemTallySources;
-    uint8_t _atemTallyFlags[21];
+    uint8_t _atemTallyFlags[TALLY_SERVER_MAX_TALLY_FLAGS];
     bool _tallyFlagsChanged;
 
     TallyClient *_getTallyClient(IPAddress clientIP, uint16_t clientPort);

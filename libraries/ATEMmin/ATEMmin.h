@@ -78,7 +78,7 @@ private:
 			uint8_t atemFadeToBlackStateFramesRemaining[2];
 			uint16_t atemAuxSourceInput[6];
 			uint16_t atemTallyByIndexSources;
-			uint8_t atemTallyByIndexTallyFlags[21];
+			uint8_t atemTallyByIndexTallyFlags[41];
 			uint16_t streamingStatusFlags; //Added by Aron N. Het Lam
 
 public:

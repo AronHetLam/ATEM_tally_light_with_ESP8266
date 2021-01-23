@@ -314,7 +314,7 @@ ATEMmin::ATEMmin(){}
 			if(!strcmp_P(cmdStr, PSTR("TlIn"))) {
 				
 				sources = word(_packetBuffer[0],_packetBuffer[1]);
-				if (sources<=20) {
+				if (sources<=40) {
 					#if ATEM_debug
 					temp = atemTallyByIndexSources;
 					#endif
@@ -643,7 +643,7 @@ ATEMmin::ATEMmin(){}
 			
 			/**
 			 * Get Tally By Index; Tally Flags
-			 * sources 	0-20: Number of
+			 * sources 	0-40: Number of
 			 */
 			uint8_t ATEMmin::getTallyByIndexTallyFlags(uint16_t sources) {
 				return atemTallyByIndexTallyFlags[sources];

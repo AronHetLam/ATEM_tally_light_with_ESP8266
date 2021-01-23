@@ -41,7 +41,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define TALLY_SERVER_MAX_TALLY_FLAGS    41
 
-#define TALLY_SERVER_BUFFER_LENGTH  42 //Max 42: Header = 12 + cmdHeader = 8 + tallySources = 2 + max 20 tally flags
+#define TALLY_SERVER_BUFFER_LENGTH  62 //Max 42: Header = 12 + cmdHeader = 8 + tallySources = 2 + max 40 tally flags
 
 #define TALLY_SERVER_DEFAULT_MAX_CLIENTS    5
 

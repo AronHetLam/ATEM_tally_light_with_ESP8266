@@ -362,7 +362,7 @@ void handleRoot() {
     html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];
     html += "</td> </tr> <tr> <td><br></td> </tr> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:12px;\"> <td colspan=\"3\"> <h2>&nbsp;Settings:</h2> </td> </tr> <tr> <td><br></td> </tr> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td> <input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
     html += WiFi.hostname();
-    html += "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Tally Light number: </td> <td> <input type=\"number\" size=\"5\" min=\"1\" max=\"21\" name=\"tNo\" value=\"";
+    html += "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Tally Light number: </td> <td> <input type=\"number\" size=\"5\" min=\"1\" max=\"41\" name=\"tNo\" value=\"";
     html += (settings.tallyNo + 1);
     html += "\" required /> </td> </tr> <tr> <td>Tally Light mode (LED 1):&nbsp;</td> <td> <select name=\"tModeLED1\"> <option value=\"";
     html += (String) MODE_NORMAL + "\" ";

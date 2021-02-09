@@ -70,7 +70,7 @@ int color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yell
 //FastLED
 #define DATA_PIN    D7
 int ledsLength;
-CRGB* leds;
+CRGB *leds;
 CRGB statusLED[1];
 
 //Initialize global variables
@@ -147,13 +147,13 @@ void setup() {
     EEPROM.get(0, settings);
 
     //Initialize LED strip
-    if(settings.neopixelsAmount > 4096)
+    if (settings.neopixelsAmount > 4096)
         settings.neopixelsAmount = 0;
 
     int ledsOffset = 0;
-    if(settings.neopixelStatusLEDOption != NEOPIXEL_STATUS_NONE) {
+    if (settings.neopixelStatusLEDOption != NEOPIXEL_STATUS_NONE) {
         ledsLength = settings.neopixelsAmount - 1;
-        if(settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_FIRST) {
+        if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_FIRST) {
             ledsOffset = 1;
             FastLED.addLeds<NEOPIXEL, DATA_PIN>(statusLED, 1);
         } else {
@@ -165,7 +165,6 @@ void setup() {
 
     leds = new CRGB[ledsLength];
     FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, ledsOffset, ledsLength);
-
 
     setSTRIP(LED_OFF);
 
@@ -207,23 +206,22 @@ void setup() {
 
 void loop() {
     switch (state) {
-        case STATE_CONNECTING_TO_WIFI: {
-                if (WiFi.status() == WL_CONNECTED) {
-                    WiFi.mode(WIFI_STA); // Disable softAP if connection is successful
-                    Serial.println("------------------------");
-                    Serial.println("Connected to WiFi:   " + WiFi.SSID());
-                    Serial.println("IP:                  " + WiFi.localIP().toString());
-                    Serial.println("Subnet Mask:         " + WiFi.subnetMask().toString());
-                    Serial.println("Gateway IP:          " + WiFi.gatewayIP().toString());
-                    changeState(STATE_CONNECTING_TO_SWITCHER);
-                } else if (firstRun) {
-                    firstRun = false;
-                    WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
-                    WiFi.softAP("Tally Light setup");
-                    setBothLEDs(LED_WHITE);
-                    setStatusLED(LED_WHITE);
-                    FastLED.show();
-                }
+        case STATE_CONNECTING_TO_WIFI:
+            if (WiFi.status() == WL_CONNECTED) {
+                WiFi.mode(WIFI_STA); // Disable softAP if connection is successful
+                Serial.println("------------------------");
+                Serial.println("Connected to WiFi:   " + WiFi.SSID());
+                Serial.println("IP:                  " + WiFi.localIP().toString());
+                Serial.println("Subnet Mask:         " + WiFi.subnetMask().toString());
+                Serial.println("Gateway IP:          " + WiFi.gatewayIP().toString());
+                changeState(STATE_CONNECTING_TO_SWITCHER);
+            } else if (firstRun) {
+                firstRun = false;
+                WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
+                WiFi.softAP("Tally Light setup");
+                setBothLEDs(LED_WHITE);
+                setStatusLED(LED_WHITE);
+                FastLED.show();
             }
             break;
 
@@ -257,25 +255,28 @@ void loop() {
             //Handle Tally Server
             tallyServer.runLoop();
 
-            //Set tally light accordingly
+            //Set tally light accordingly - LED 1 and Neopixels
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
                 setLED1(LED_RED);
-            } else if ((!(settings.tallyModeLED1 == MODE_PROGRAM_ONLY))                             //if not program only
+                setSTRIP(LED_RED);
+            } else if ((!(settings.tallyModeLED1 == MODE_PROGRAM_ONLY))                         //if not program only
                        && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
-                           || settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
+                           || settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)) {                //or preview stay on
                 setLED1(LED_GREEN);
-            } else {                                                                            // If tally is neither
+                setSTRIP(LED_GREEN);
+            } else {                                                                            //if tally is neither
                 setLED1(LED_OFF);
+                setSTRIP(LED_OFF);
             }
 
             //Set tally light LED 2 accordingly
             if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
                 setLED2(LED_RED);
-            } else if ((!(settings.tallyModeLED2 == MODE_PROGRAM_ONLY))                             //if not program only
+            } else if ((!(settings.tallyModeLED2 == MODE_PROGRAM_ONLY))                         //if not program only
                        && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
-                           || settings.tallyModeLED2 == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
+                           || settings.tallyModeLED2 == MODE_PREVIEW_STAY_ON)) {                //or preview stay on
                 setLED2(LED_GREEN);
-            } else {                                                                            // If tally is neither
+            } else {                                                                            //if tally is neither
                 setLED2(LED_OFF);
             }
 
@@ -283,82 +284,37 @@ void loop() {
             mixRate = 1000; //round((atemSwitcher.getTransitionMixRate(0)*33.33))*0.02;
 
             //Main loop for things that should work every second
-            if(secLoop >= 400) {
-              //Get and calculate battery current
-              int raw = analogRead(A0);
-              uBatt=(double)raw/1023*4.2;
+            if (secLoop >= 400) {
+                //Get and calculate battery current
+                int raw = analogRead(A0);
+                uBatt = (double)raw / 1023 * 4.2;
 
-              //Set back status LED after one second to working LED_BLUE if it was changed by anything
-              if(lowLedOn) {
-                setStatusLED(LED_BLUE);
-                lowLedOn = false;
-              }
+                //Set back status LED after one second to working LED_BLUE if it was changed by anything
+                if (lowLedOn) {
+                    setStatusLED(LED_BLUE);
+                    lowLedOn = false;
+                }
 
-              //Blink every 5 seconds for one second if battery current is under 3.6V
-              if(lowLedCount >= 5 && uBatt <= 3.600) {
-                setStatusLED(LED_YELLOW);
-                lowLedOn = true;
-                lowLedCount = 0;
-              }
-              lowLedCount++;
+                //Blink every 5 seconds for one second if battery current is under 3.6V
+                if (lowLedCount >= 5 && uBatt <= 3.600) {
+                    setStatusLED(LED_YELLOW);
+                    lowLedOn = true;
+                    lowLedCount = 0;
+                }
+                lowLedCount++;
 
-              //Turn stripes of and put ESP to deepsleep if battery is too low
-              if(uBatt <= 3.499) {
-                setSTRIP(LED_OFF);
-                setStatusLED(LED_OFF);
-                FastLED.show();
-                ESP.deepSleep(0, WAKE_NO_RFCAL);
-              }
+                // Commented out for userst without batteries
+                // //Turn stripes of and put ESP to deepsleep if battery is too low
+                // if(uBatt <= 3.499) {
+                //     setSTRIP(LED_OFF);
+                //     setStatusLED(LED_OFF);
+                //     FastLED.show();
+                //     ESP.deepSleep(0, WAKE_NO_RFCAL);
+                // }
 
-              secLoop = 0;
+                secLoop = 0;
             }
             secLoop++;
-
-            //Set bool for active cam
-            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
-              activeCam = true;
-
-              //When active cam became true run a small logic to switch preview cam also to active cam to disable all other lights
-              if(activeCamPreview) {
-                changePreview = true;
-                currentMillis = 0;
-              }
-            } else {
-              activeCam = false;
-            }
-
-            //Switch preview cam to active cam after the correct amount of time
-            if (changePreview) {
-              currentMillis++;
-
-              if (currentMillis >= mixRate) {
-                setActive(atemSwitcher.getProgramInputVideoSource(0));
-                changePreview = false;
-              }
-            }
-
-            //set last active cam to current cam if no preview switching is in progress (after it is done)
-            if(!changePreview) {
-              lastActive = atemSwitcher.getProgramInputVideoSource(0);
-            }
-
-            //Set bool for preview cam
-            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02) {   //and tally preview
-              activeCamPreview = true;
-            } else {
-              activeCamPreview = false;
-            }
-
-            //Set tally light accordingly
-            if (activeCam) {              //if tally live
-                setSTRIP(LED_RED);
-            } else if ((!(settings.tallyModeLED1 == MODE_PROGRAM_ONLY))                             //if not program only
-                       && ((activeCamPreview)                                                       //and tally preview
-                           || settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)) {                    //or preview stay on
-                setSTRIP(LED_GREEN);
-            } else {                                                                            // If tally is neither
-                setSTRIP(LED_OFF);
-            }
 
             //Show LED Strip changes
             FastLED.show();
@@ -472,18 +428,6 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
     }
 }
 
-//Set current cam as preview cam to disable lights on all other tallys
-void setActive(uint8_t camNumber) {
-  Serial.println("---------------------");
-  Serial.println(lastActive);
-  Serial.println(lastSet);
-  Serial.println(camNumber);
-  if(lastActive != lastSet) {
-      atemSwitcher.setPreviewInputVideoSource(0, camNumber);
-      lastSet = camNumber;
-  }
-}
-
 //Set the color og the LED strip, except for the status LED
 void setSTRIP(uint8_t color) {
     for (int i = 0; i < ledsLength; i++) {
@@ -494,7 +438,7 @@ void setSTRIP(uint8_t color) {
 //Set the single status LED (last LED)
 void setStatusLED(uint8_t color) {
     statusLED[0] = color_led[color];
-    if(color == LED_BLUE) {
+    if (color == LED_BLUE) {
         statusLED[0].fadeToBlackBy(230);
     } else {
         statusLED[0].fadeToBlackBy(0);
@@ -650,55 +594,55 @@ void handleSave() {
             String var = server.argName(i);
             String val = server.arg(i);
 
-            if (var ==  "tName") {
+            if (var == "tName") {
                 val.toCharArray(settings.tallyName, (uint8_t)32);
-            } else if (var ==  "tModeLED1") {
+            } else if (var == "tModeLED1") {
                 settings.tallyModeLED1 = val.toInt();
-            } else if (var ==  "tModeLED2") {
+            } else if (var == "tModeLED2") {
                 settings.tallyModeLED2 = val.toInt();
-            } else if (var ==  "neoPxAmount") {
+            } else if (var == "neoPxAmount") {
                 settings.neopixelsAmount = val.toInt();
-            } else if (var ==  "neoPxStatus") {
+            } else if (var == "neoPxStatus") {
                 settings.neopixelStatusLEDOption = val.toInt();
-            } else if (var ==  "tNo") {
+            } else if (var == "tNo") {
                 settings.tallyNo = val.toInt() - 1;
-            } else if (var ==  "ssid") {
+            } else if (var == "ssid") {
                 ssid = String(val);
-            } else if (var ==  "pwd") {
+            } else if (var == "pwd") {
                 pwd = String(val);
-            } else if (var ==  "staticIP") {
+            } else if (var == "staticIP") {
                 settings.staticIP = (val == "true");
-            } else if (var ==  "tIP1") {
+            } else if (var == "tIP1") {
                 settings.tallyIP[0] = val.toInt();
-            } else if (var ==  "tIP2") {
+            } else if (var == "tIP2") {
                 settings.tallyIP[1] = val.toInt();
-            } else if (var ==  "tIP3") {
+            } else if (var == "tIP3") {
                 settings.tallyIP[2] = val.toInt();
-            } else if (var ==  "tIP4") {
+            } else if (var == "tIP4") {
                 settings.tallyIP[3] = val.toInt();
-            } else if (var ==  "mask1") {
+            } else if (var == "mask1") {
                 settings.tallySubnetMask[0] = val.toInt();
-            } else if (var ==  "mask2") {
+            } else if (var == "mask2") {
                 settings.tallySubnetMask[1] = val.toInt();
-            } else if (var ==  "mask3") {
+            } else if (var == "mask3") {
                 settings.tallySubnetMask[2] = val.toInt();
-            } else if (var ==  "mask4") {
+            } else if (var == "mask4") {
                 settings.tallySubnetMask[3] = val.toInt();
-            } else if (var ==  "gate1") {
+            } else if (var == "gate1") {
                 settings.tallyGateway[0] = val.toInt();
-            } else if (var ==  "gate2") {
+            } else if (var == "gate2") {
                 settings.tallyGateway[1] = val.toInt();
-            } else if (var ==  "gate3") {
+            } else if (var == "gate3") {
                 settings.tallyGateway[2] = val.toInt();
-            } else if (var ==  "gate4") {
+            } else if (var == "gate4") {
                 settings.tallyGateway[3] = val.toInt();
-            } else if (var ==  "aIP1") {
+            } else if (var == "aIP1") {
                 settings.switcherIP[0] = val.toInt();
-            } else if (var ==  "aIP2") {
+            } else if (var == "aIP2") {
                 settings.switcherIP[1] = val.toInt();
-            } else if (var ==  "aIP3") {
+            } else if (var == "aIP3") {
                 settings.switcherIP[2] = val.toInt();
-            } else if (var ==  "aIP4") {
+            } else if (var == "aIP4") {
                 settings.switcherIP[3] = val.toInt();
             }
         }

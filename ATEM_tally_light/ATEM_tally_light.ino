@@ -110,7 +110,6 @@ unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 bool changePreview = false;
 
-long mixRate = 3000;
 long secLoop = 0;
 int lowLedCount = 0;
 bool lowLedOn = false;
@@ -279,9 +278,6 @@ void loop() {
             } else {                                                                            //if tally is neither
                 setLED2(LED_OFF);
             }
-
-            //Get current set transition time of "mix" transition for switching back preview
-            mixRate = 1000; //round((atemSwitcher.getTransitionMixRate(0)*33.33))*0.02;
 
             //Main loop for things that should work every second
             if (secLoop >= 400) {

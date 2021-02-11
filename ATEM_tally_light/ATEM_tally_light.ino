@@ -163,7 +163,8 @@ void setup() {
     }
 
     leds = new CRGB[ledsLength];
-    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, ledsOffset, ledsLength);
+    if(ledsLength > 0)
+        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, ledsOffset, ledsLength);
 
     setSTRIP(LED_OFF);
 

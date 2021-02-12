@@ -143,7 +143,7 @@ void setup() {
     //save flash memory from being written too without need.
     WiFi.persistent(false);
 
-    //Read settings from EEPROM. Settings struct takes 68 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
+    //Read settings from EEPROM. Settings struct takes 72 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
     EEPROM.begin(72); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);
 
@@ -164,6 +164,7 @@ void setup() {
             }
         } else {
             numTallyLEDs = settings.neopixelsAmount;
+            numStatusLEDs = 0;
             tallyLEDs = leds;
         }
     } else {
@@ -456,7 +457,8 @@ void setStatusLED(uint8_t color) {
 
 // void printLeds(){
 //     for (int i = 0; i < settings.neopixelsAmount; i++) {
-//         Serial.print("RGB: ");
+//         Serial.print(i);
+//         Serial.print(", RGB: ");
 //         Serial.print(leds[i].r);
 //         Serial.print(", ");
 //         Serial.print(leds[i].g);

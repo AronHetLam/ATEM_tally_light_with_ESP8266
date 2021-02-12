@@ -69,9 +69,11 @@ int color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yell
 
 //FastLED
 #define DATA_PIN    D7
-int ledsLength;
+int numTallyLEDs;
+int numStatusLEDs;
 CRGB *leds;
-CRGB statusLED[1];
+CRGB *tallyLEDs;
+CRGB *statusLED;
 
 //Initialize global variables
 ESP8266WebServer server(80);
@@ -146,25 +148,29 @@ void setup() {
     EEPROM.get(0, settings);
 
     //Initialize LED strip
-    if (settings.neopixelsAmount > 4096)
-        settings.neopixelsAmount = 0;
+    if (0 < settings.neopixelsAmount && settings.neopixelsAmount <= 4096) {
+        leds = new CRGB[settings.neopixelsAmount];
+        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, settings.neopixelsAmount);
 
-    int ledsOffset = 0;
-    if (settings.neopixelStatusLEDOption != NEOPIXEL_STATUS_NONE) {
-        ledsLength = settings.neopixelsAmount - 1;
-        if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_FIRST) {
-            ledsOffset = 1;
-            FastLED.addLeds<NEOPIXEL, DATA_PIN>(statusLED, 1);
+        if (settings.neopixelStatusLEDOption != NEOPIXEL_STATUS_NONE) {
+            numStatusLEDs = 1;
+            numTallyLEDs = settings.neopixelsAmount - numStatusLEDs;
+            if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_FIRST) {
+                statusLED = leds;
+                tallyLEDs = leds + numStatusLEDs;
+            } else { // if last or or other value
+                statusLED = leds + numTallyLEDs;
+                tallyLEDs = leds;
+            }
         } else {
-            FastLED.addLeds<NEOPIXEL, DATA_PIN>(statusLED, ledsLength, 1);
+            numTallyLEDs = settings.neopixelsAmount;
+            tallyLEDs = leds;
         }
     } else {
-        ledsLength = settings.neopixelsAmount;
+        settings.neopixelsAmount = 0;
+        numTallyLEDs = 0;
+        numStatusLEDs = 0;
     }
-
-    leds = new CRGB[ledsLength];
-    if(ledsLength > 0)
-        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, ledsOffset, ledsLength);
 
     setSTRIP(LED_OFF);
 
@@ -427,20 +433,38 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
 
 //Set the color og the LED strip, except for the status LED
 void setSTRIP(uint8_t color) {
-    for (int i = 0; i < ledsLength; i++) {
-        leds[i] = color_led[color];
+    for (int i = 0; i < numTallyLEDs; i++) {
+        tallyLEDs[i] = color_led[color];
     }
+    // Serial.println("Tally:");
+    // printLeds();
 }
 
 //Set the single status LED (last LED)
 void setStatusLED(uint8_t color) {
-    statusLED[0] = color_led[color];
-    if (color == LED_BLUE) {
-        statusLED[0].fadeToBlackBy(230);
-    } else {
-        statusLED[0].fadeToBlackBy(0);
+    for (int i = 0; i < numStatusLEDs; i++) {
+        statusLED[i] = color_led[color];
+        if (color == LED_BLUE) {
+            statusLED[i].fadeToBlackBy(230);
+        } else {
+            statusLED[i].fadeToBlackBy(0);
+        }
     }
+    // Serial.println("Status:");
+    // printLeds();
 }
+
+// void printLeds(){
+//     for (int i = 0; i < settings.neopixelsAmount; i++) {
+//         Serial.print("RGB: ");
+//         Serial.print(leds[i].r);
+//         Serial.print(", ");
+//         Serial.print(leds[i].g);
+//         Serial.print(", ");
+//         Serial.println(leds[i].b);
+//     }
+//     Serial.println();
+// }
 
 //Serve setup web page to client, by sending HTML with the correct variables
 void handleRoot() {

@@ -102,22 +102,13 @@ struct Settings {
 Settings settings;
 
 bool firstRun = true;
-bool activeCam = false;
-bool activeCamPreview = false;
 
-int lastActive = -1;
-int lastSet = -1;
-
-unsigned long currentMillis = 0;
-unsigned long previousMillis = 0;
-bool changePreview = false;
-
-long secLoop = 0;
-int lowLedCount = 0;
-bool lowLedOn = false;
-
-double uBatt = 0;
-char buffer[3];
+//Commented out for users without batteries
+// long secLoop = 0;
+// int lowLedCount = 0;
+// bool lowLedOn = false;
+// double uBatt = 0;
+// char buffer[3];
 
 //Perform initial setup on power on
 void setup() {
@@ -132,8 +123,8 @@ void setup() {
 
     setBothLEDs(LED_BLUE);
 
-    //Setup current-measuring pin
-    pinMode(A0, INPUT);
+    //Setup current-measuring pin - Commented out for users without batteries
+    // pinMode(A0, INPUT);
 
     //Start Serial
     Serial.begin(115200);
@@ -174,8 +165,6 @@ void setup() {
     }
 
     setSTRIP(LED_OFF);
-
-    //Set LED Status
     setStatusLED(LED_YELLOW);
     FastLED.show();
 
@@ -287,38 +276,38 @@ void loop() {
                 setLED2(LED_OFF);
             }
 
+            //Commented out for userst without batteries - Also timer is not done properly
             //Main loop for things that should work every second
-            if (secLoop >= 400) {
-                //Get and calculate battery current
-                int raw = analogRead(A0);
-                uBatt = (double)raw / 1023 * 4.2;
+            // if (secLoop >= 400) {
+            //     //Get and calculate battery current
+            //     int raw = analogRead(A0);
+            //     uBatt = (double)raw / 1023 * 4.2;
 
-                //Set back status LED after one second to working LED_BLUE if it was changed by anything
-                if (lowLedOn) {
-                    setStatusLED(LED_BLUE);
-                    lowLedOn = false;
-                }
+            //     //Set back status LED after one second to working LED_BLUE if it was changed by anything
+            //     if (lowLedOn) {
+            //         setStatusLED(LED_BLUE);
+            //         lowLedOn = false;
+            //     }
 
-                //Blink every 5 seconds for one second if battery current is under 3.6V
-                if (lowLedCount >= 5 && uBatt <= 3.600) {
-                    setStatusLED(LED_YELLOW);
-                    lowLedOn = true;
-                    lowLedCount = 0;
-                }
-                lowLedCount++;
+            //     //Blink every 5 seconds for one second if battery current is under 3.6V
+            //     if (lowLedCount >= 5 && uBatt <= 3.600) {
+            //         setStatusLED(LED_YELLOW);
+            //         lowLedOn = true;
+            //         lowLedCount = 0;
+            //     }
+            //     lowLedCount++;
 
-                // Commented out for userst without batteries
-                // //Turn stripes of and put ESP to deepsleep if battery is too low
-                // if(uBatt <= 3.499) {
-                //     setSTRIP(LED_OFF);
-                //     setStatusLED(LED_OFF);
-                //     FastLED.show();
-                //     ESP.deepSleep(0, WAKE_NO_RFCAL);
-                // }
+            //    //Turn stripes of and put ESP to deepsleep if battery is too low
+            //    if(uBatt <= 3.499) {
+            //        setSTRIP(LED_OFF);
+            //        setStatusLED(LED_OFF);
+            //        FastLED.show();
+            //        ESP.deepSleep(0, WAKE_NO_RFCAL);
+            //    }
 
-                secLoop = 0;
-            }
-            secLoop++;
+            //     secLoop = 0;
+            // }
+            // secLoop++;
 
             //Show LED Strip changes
             FastLED.show();
@@ -496,9 +485,12 @@ void handleRoot() {
     html += WiFi.SSID();
     html += "</td> </tr> <tr> <td><br></td> </tr> <tr> <td>Signal strength:</td> <td colspan=\"2\">";
     html += WiFi.RSSI();
-    html += " dBm</td> </tr> <tr> <td><br></td> </tr> <tr> <td>Battery voltage:</td> <td colspan=\"2\">";
-    html += dtostrf(uBatt, 0, 3, buffer);
-    html += " V</td> </tr> <tr> <td>Static IP:</td> <td colspan=\"2\">";
+    html += " dBm</td> </tr>";
+    //Commented out for users without batteries
+    // html += "<tr> <td><br></td> </tr> <tr> <td>Battery voltage:</td> <td colspan=\"2\">";
+    // html += dtostrf(uBatt, 0, 3, buffer);
+    // html += " V</td> </tr>";
+    html += "<tr> <td>Static IP:</td> <td colspan=\"2\">";
     html += settings.staticIP == true ? "True" : "False";
     html += "</td> </tr> <tr> <td>Tally Light IP:</td> <td colspan=\"2\">";
     html += WiFi.localIP().toString();

@@ -165,7 +165,7 @@ void setup() {
     }
 
     setSTRIP(LED_OFF);
-    setStatusLED(LED_YELLOW);
+    setStatusLED(LED_BLUE);
     FastLED.show();
 
     Serial.println(settings.tallyName);
@@ -285,7 +285,7 @@ void loop() {
 
             //     //Set back status LED after one second to working LED_BLUE if it was changed by anything
             //     if (lowLedOn) {
-            //         setStatusLED(LED_BLUE);
+            //         setStatusLED(LED_ORANGE);
             //         lowLedOn = false;
             //     }
 
@@ -346,19 +346,19 @@ void changeState(uint8_t stateToChangeTo) {
         case STATE_CONNECTING_TO_WIFI:
             state = STATE_CONNECTING_TO_WIFI;
             setBothLEDs(LED_BLUE);
-            setStatusLED(LED_YELLOW);
+            setStatusLED(LED_BLUE);
             setSTRIP(LED_OFF);
             break;
         case STATE_CONNECTING_TO_SWITCHER:
             state = STATE_CONNECTING_TO_SWITCHER;
             setBothLEDs(LED_PINK);
-            setStatusLED(LED_ORANGE);
+            setStatusLED(LED_PINK);
             setSTRIP(LED_OFF);
             break;
         case STATE_RUNNING:
             state = STATE_RUNNING;
             setBothLEDs(LED_GREEN);
-            setStatusLED(LED_BLUE);
+            setStatusLED(LED_ORANGE);
             break;
     }
     FastLED.show();
@@ -434,7 +434,7 @@ void setSTRIP(uint8_t color) {
 void setStatusLED(uint8_t color) {
     for (int i = 0; i < numStatusLEDs; i++) {
         statusLED[i] = color_led[color];
-        if (color == LED_BLUE) {
+        if (color == LED_ORANGE) {
             statusLED[i].fadeToBlackBy(230);
         } else {
             statusLED[i].fadeToBlackBy(0);

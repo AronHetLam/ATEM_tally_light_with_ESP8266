@@ -213,6 +213,7 @@ void loop() {
                 changeState(STATE_CONNECTING_TO_SWITCHER);
             } else if (firstRun) {
                 firstRun = false;
+                Serial.println("Unable to connect. Serving \"Tally Light setup\" WiFi for configuration, while still trying to connect...");
                 WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                 WiFi.softAP("Tally Light setup");
                 setBothLEDs(LED_WHITE);

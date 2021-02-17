@@ -139,7 +139,7 @@ void setup() {
     EEPROM.get(0, settings);
 
     //Initialize LED strip
-    if (0 < settings.neopixelsAmount && settings.neopixelsAmount <= 4096) {
+    if (0 < settings.neopixelsAmount && settings.neopixelsAmount <= 1000) {
         leds = new CRGB[settings.neopixelsAmount];
         FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, settings.neopixelsAmount);
 

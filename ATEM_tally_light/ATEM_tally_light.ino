@@ -538,7 +538,7 @@ void handleRoot() {
     html += (String) MODE_PROGRAM_ONLY + "\" ";
     if (settings.tallyModeLED2 == MODE_PROGRAM_ONLY)
         html += "selected";
-    html += ">Program only</option> </select> </td> </tr> <tr> <td>Amount of Neopixels:</td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"4096\" name=\"neoPxAmount\" value=\"";
+    html += ">Program only</option> </select> </td> </tr> <tr> <td>Amount of Neopixels:</td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"1000\" name=\"neoPxAmount\" value=\"";
     html += settings.neopixelsAmount;
     html += "\" required /> </td> </tr> <tr> <td>Neopixel status LED: </td> <td> <select name=\"neoPxStatus\"> <option value=\"";
     html += (String) NEOPIXEL_STATUS_FIRST + "\" ";

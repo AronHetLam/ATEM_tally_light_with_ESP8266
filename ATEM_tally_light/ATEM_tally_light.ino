@@ -49,7 +49,7 @@
 #define LED_ORANGE  7
 
 //Map "old" LED colors to CRGB colors
-int color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Pink, CRGB::White, CRGB::Orange };
+CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Pink, CRGB::White, CRGB::Orange };
 
 //Define states
 #define STATE_STARTING                  0
@@ -74,6 +74,7 @@ int numStatusLEDs;
 CRGB *leds;
 CRGB *tallyLEDs;
 CRGB *statusLED;
+bool neopixelsUpdated = false;
 
 //Initialize global variables
 ESP8266WebServer server(80);
@@ -97,6 +98,7 @@ struct Settings {
     IPAddress switcherIP;
     uint16_t neopixelsAmount;
     uint8_t neopixelStatusLEDOption;
+    uint8_t NeopixelBrightness;
 };
 
 Settings settings;
@@ -164,6 +166,7 @@ void setup() {
         numStatusLEDs = 0;
     }
 
+    FastLED.setBrightness(settings.NeopixelBrightness);
     setSTRIP(LED_OFF);
     setStatusLED(LED_BLUE);
     FastLED.show();
@@ -218,7 +221,6 @@ void loop() {
                 WiFi.softAP("Tally Light setup");
                 setBothLEDs(LED_WHITE);
                 setStatusLED(LED_WHITE);
-                FastLED.show();
             }
             break;
 
@@ -302,16 +304,12 @@ void loop() {
             //    if(uBatt <= 3.499) {
             //        setSTRIP(LED_OFF);
             //        setStatusLED(LED_OFF);
-            //        FastLED.show();
             //        ESP.deepSleep(0, WAKE_NO_RFCAL);
             //    }
 
             //     secLoop = 0;
             // }
             // secLoop++;
-
-            //Show LED Strip changes
-            FastLED.show();
 
             //Switch state if connection is lost, dependant on which connection is lost.
             if (WiFi.status() != WL_CONNECTED) {
@@ -334,6 +332,12 @@ void loop() {
                 tallyServer.resetTallyFlags();
             }
             break;
+    }
+
+    //Show stip only on updates
+    if(neopixelsUpdated) {
+        FastLED.show();
+        neopixelsUpdated = false;
     }
 
     //Handle web interface
@@ -362,7 +366,6 @@ void changeState(uint8_t stateToChangeTo) {
             setStatusLED(LED_ORANGE);
             break;
     }
-    FastLED.show();
 }
 
 //Set the color of both LEDs
@@ -424,8 +427,12 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
 
 //Set the color og the LED strip, except for the status LED
 void setSTRIP(uint8_t color) {
-    for (int i = 0; i < numTallyLEDs; i++) {
-        tallyLEDs[i] = color_led[color];
+    if(numTallyLEDs > 0 && tallyLEDs[0] != color_led[color]) {
+        // for (int i = 0; i < numTallyLEDs; i++) {
+        //     tallyLEDs[i] = color_led[color];
+        // }
+        memset(tallyLEDs, color_led[color], numTallyLEDs);
+        neopixelsUpdated = true;
     }
     // Serial.println("Tally:");
     // printLeds();
@@ -433,13 +440,16 @@ void setSTRIP(uint8_t color) {
 
 //Set the single status LED (last LED)
 void setStatusLED(uint8_t color) {
-    for (int i = 0; i < numStatusLEDs; i++) {
-        statusLED[i] = color_led[color];
-        if (color == LED_ORANGE) {
-            statusLED[i].fadeToBlackBy(230);
-        } else {
-            statusLED[i].fadeToBlackBy(0);
+    if (numStatusLEDs > 0 && statusLED[0] != color_led[color]) {
+        for (int i = 0; i < numStatusLEDs; i++) {
+            statusLED[i] = color_led[color];
+            if (color == LED_ORANGE) {
+                statusLED[i].fadeToBlackBy(230);
+            } else {
+                statusLED[i].fadeToBlackBy(0);
+            }
         }
+        neopixelsUpdated = true;
     }
     // Serial.println("Status:");
     // printLeds();
@@ -552,7 +562,9 @@ void handleRoot() {
     html += (String) NEOPIXEL_STATUS_NONE + "\" ";
     if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_NONE)
         html += "selected";
-    html += ">None</option> </select> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Network name (SSID): </td> <td> <input type=\"text\" size=\"30\" maxlength=\"30\" name=\"ssid\" value=\"";
+    html += ">None</option> </select> </td> </tr> <tr> <td> Neopixel brightness: </td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"255\" name=\"neoPxBright\" value=\"";
+    html += settings.NeopixelBrightness;
+    html +=  "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Network name(SSID): </td> <td> <input type =\"text\" size=\"30\" maxlength=\"30\" name=\"ssid\" value=\"";
     html += WiFi.SSID();
     html += "\" required /> </td> </tr> <tr> <td>Network password: </td> <td> <input type=\"password\" size=\"30\" maxlength=\"30\" name=\"pwd\" pattern=\"^$|.{8,32}\" value=\"";
     if (WiFi.isConnected()) //As a minimum security meassure, to only send the wifi password if it's currently connected to the given network.
@@ -620,6 +632,8 @@ void handleSave() {
                 settings.neopixelsAmount = val.toInt();
             } else if (var == "neoPxStatus") {
                 settings.neopixelStatusLEDOption = val.toInt();
+            } else if (var == "neoPxBright") {
+                settings.NeopixelBrightness = val.toInt();
             } else if (var == "tNo") {
                 settings.tallyNo = val.toInt() - 1;
             } else if (var == "ssid") {

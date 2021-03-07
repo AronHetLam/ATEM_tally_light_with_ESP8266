@@ -428,10 +428,9 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
 //Set the color og the LED strip, except for the status LED
 void setSTRIP(uint8_t color) {
     if(numTallyLEDs > 0 && tallyLEDs[0] != color_led[color]) {
-        // for (int i = 0; i < numTallyLEDs; i++) {
-        //     tallyLEDs[i] = color_led[color];
-        // }
-        memset(tallyLEDs, color_led[color], numTallyLEDs);
+        for (int i = 0; i < numTallyLEDs; i++) {
+            tallyLEDs[i] = color_led[color];
+        }
         neopixelsUpdated = true;
     }
     // Serial.println("Tally:");

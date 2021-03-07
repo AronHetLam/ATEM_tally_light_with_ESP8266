@@ -21,13 +21,31 @@
 #define FASTLED_ESP8266_DMA
 
 //Include libraries:
-#include <ESP8266WiFi.h>
+#if ESP32
+#include <WebServer.h>
+#include <WiFi.h>
+#else
 #include <ESP8266WebServer.h>
+#include <ESP8266WiFi.h>
+#endif
+
 #include <EEPROM.h>
 #include <ATEMmin.h>
 #include <TallyServer.h>
 #include <FastLED.h>
 
+#if ESP32
+//Define LED1 color pins
+#define PIN_RED1   32
+#define PIN_GREEN1 33
+#define PIN_BLUE1  25
+
+//Define LED2 color pins
+#define PIN_RED2   26
+#define PIN_GREEN2 27
+#define PIN_BLUE2  14
+
+#else
 //Define LED1 color pins
 #define PIN_RED1    D0
 #define PIN_GREEN1  D2
@@ -37,6 +55,7 @@
 #define PIN_RED2    D4
 #define PIN_GREEN2  D5
 #define PIN_BLUE2   D6
+#endif
 
 //Define LED colors
 #define LED_OFF     0
@@ -68,7 +87,11 @@ CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yel
 #define NEOPIXEL_STATUS_NONE            3
 
 //FastLED
+#if ESP32
+#define DATA_PIN    12
+#else
 #define DATA_PIN    D7
+#endif
 int numTallyLEDs;
 int numStatusLEDs;
 CRGB *leds;
@@ -77,7 +100,11 @@ CRGB *statusLED;
 bool neopixelsUpdated = false;
 
 //Initialize global variables
+#if ESP32
+WebServer server(80);
+#else
 ESP8266WebServer server(80);
+#endif
 
 ATEMmin atemSwitcher;
 
@@ -134,7 +161,7 @@ void setup() {
     Serial.println("Serial started");
 
     //save flash memory from being written too without need.
-    WiFi.persistent(false);
+    //WiFi.persistent(false);
 
     //Read settings from EEPROM. Settings struct takes 72 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
     EEPROM.begin(72); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
@@ -180,7 +207,11 @@ void setup() {
     //Put WiFi into station mode and make it connect to saved network
     WiFi.mode(WIFI_STA);
     WiFi.begin();
+#if ESP32
+    WiFi.setHostname(settings.tallyName);
+#else
     WiFi.hostname(settings.tallyName);
+#endif
     WiFi.setAutoReconnect(true);
 
     Serial.println("------------------------");
@@ -415,7 +446,11 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
         case LED_PINK:
             digitalWrite(pinRed, 1);
             digitalWrite(pinGreen, 0);
+#if ESP32
+            digitalWrite(pinBlue, 1);
+#else
             analogWrite(pinBlue, 0xff);
+#endif
             break;
         case LED_WHITE:
             digitalWrite(pinRed, 1);
@@ -520,7 +555,11 @@ void handleRoot() {
     html += "</td> </tr> <tr> <td>ATEM switcher IP:</td> <td colspan=\"2\">";
     html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];
     html += "</td> </tr> <tr> <td><br></td> </tr> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:12px;\"> <td colspan=\"3\"> <h2>&nbsp;Settings:</h2> </td> </tr> <tr> <td><br></td> </tr> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td> <input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
+#if ESP32
+    html += WiFi.getHostname();
+#else
     html += WiFi.hostname();
+#endif
     html += "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Tally Light number: </td> <td> <input type=\"number\" size=\"5\" min=\"1\" max=\"41\" name=\"tNo\" value=\"";
     html += (settings.tallyNo + 1);
     html += "\" required /> </td> </tr> <tr> <td>Tally Light mode (LED 1):&nbsp;</td> <td> <select name=\"tModeLED1\"> <option value=\"";
@@ -686,9 +725,7 @@ void handleSave() {
             delay(5000);
 
             if (ssid && pwd && (ssid != WiFi.SSID() || pwd != WiFi.psk())) {
-                WiFi.persistent(true);
-                WiFi.begin(ssid, pwd);
-                WiFi.persistent(false);
+                WiFi.begin(ssid.c_str(), pwd.c_str());
             }
 
             ESP.restart();

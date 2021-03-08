@@ -3,14 +3,14 @@
 [![GitHub release](https://img.shields.io/github/v/release/AronHetLam/ATEM_tally_light_with_ESP8266)](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/releases/latest)
 [![License](https://img.shields.io/github/license/AronHetLam/ATEM_tally_light_with_ESP8266)](LICENSE)
 
-Wireless tally light for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED or LED strip. This solution is __not__ limited by the ATEM switchers' connection limit, making it possible to connect as many as you need.
+Wireless tally light and 'On Air' sign for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED or LED strip. This solution is __not__ limited by the ATEM switchers' connection limit, making it possible to connect as many as you need.
 
 Should easily be convertable to use with ESP32 or, regular Arduino boards and a WiFi module, by changeing the include statements and a few other things (however, this is not tested).
 
 __DIY guide__ is available in the [wiki](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/wiki/DIY-guide). __No coding required!__
 
 # What does it do?
-Once set up, it will automatically connect to an ATEM switcher over WiFi and function as a tally light.
+Once set up, it will automatically connect to an ATEM switcher over WiFi and function as a tally light or 'On Air' sign.
 
 When the program is uploaded to the ESP8266 the setup is done with a webpage it serves over WiFi where you are able to see status details, and perform the basic setup. Depending on if it's connecting to a known network or not it will serve the webpage on it's IP address, or on [192.168.4.1](HTTP://192.168.4.1) (default) over a softAP (access point) named "Tally light setup". For more details, see the guide int the [wiki](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/wiki/DIY-guide).
 
@@ -34,13 +34,16 @@ OFF | Tally neither live or preview (or no power. Blue LED on the D1 mini is on 
 ORANGE | Connected and running (Only shown by status LED on addressable LED strip).
 
 ## Modes of operation
-By default the tally light works as a normal tally light would in a professional enviroment. However, as I in my personal use case needed it to work a bit differently, I added the following modes of oparation for convenience.
+By default the tally light works as a normal tally light would in a professional enviroment, but other modes are available as described.
 
 Mode | Description
 -----|------------
 Normal | As describen in the above table.
 Preview stay on | Tally will be green whenever not in program
 Program only | Tally will be off whenever not in program
+On Air | Red when switcher is streaming, off otherwise.
+
+Note: only some Atem models support streaming, so On Air mode only works with those models. On Air mode also needs a direct connection to switcher, not another tally unit. However, it still retransmits tally data to other units if needed.
 
 # Use Arduino IDE with ESP8266 module
 See details at [ESP8266](https://github.com/esp8266/Arduino) on how to setup and use ESP8266 modules like a regular Arduino board.

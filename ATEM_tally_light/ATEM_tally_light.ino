@@ -22,6 +22,7 @@
 
 //Include libraries:
 #if ESP32
+#include <esp_wifi.h>
 #include <WebServer.h>
 #include <WiFi.h>
 #else
@@ -221,7 +222,7 @@ void setup() {
 
     Serial.println("------------------------");
     Serial.println("Connecting to WiFi...");
-    Serial.println("Network name (SSID): " + WiFi.SSID());
+    Serial.println("Network name (SSID): " + getSSID());
 
     // Initialize and begin HTTP server for handeling the web interface
     server.on("/", handleRoot);
@@ -245,7 +246,7 @@ void loop() {
             if (WiFi.status() == WL_CONNECTED) {
                 WiFi.mode(WIFI_STA); // Disable softAP if connection is successful
                 Serial.println("------------------------");
-                Serial.println("Connected to WiFi:   " + WiFi.SSID());
+                Serial.println("Connected to WiFi:   " + getSSID());
                 Serial.println("IP:                  " + WiFi.localIP().toString());
                 Serial.println("Subnet Mask:         " + WiFi.subnetMask().toString());
                 Serial.println("Gateway IP:          " + WiFi.gatewayIP().toString());
@@ -505,7 +506,7 @@ void handleRoot() {
     }
 
     html += "</td> </tr> <tr> <td>Network name (SSID):</td> <td colspan=\"2\">";
-    html += WiFi.SSID();
+    html += getSSID();
     html += "</td> </tr> <tr> <td><br></td> </tr> <tr> <td>Signal strength:</td> <td colspan=\"2\">";
     html += WiFi.RSSI();
     html += " dBm</td> </tr>";
@@ -589,7 +590,7 @@ void handleRoot() {
     html += ">None</option> </select> </td> </tr> <tr> <td> Neopixel brightness: </td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"255\" name=\"neoPxBright\" value=\"";
     html += settings.NeopixelBrightness;
     html +=  "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Network name(SSID): </td> <td> <input type =\"text\" size=\"30\" maxlength=\"30\" name=\"ssid\" value=\"";
-    html += WiFi.SSID();
+    html += getSSID();
     html += "\" required /> </td> </tr> <tr> <td>Network password: </td> <td> <input type=\"password\" size=\"30\" maxlength=\"30\" name=\"pwd\" pattern=\"^$|.{8,32}\" value=\"";
     if (WiFi.isConnected()) //As a minimum security meassure, to only send the wifi password if it's currently connected to the given network.
         html += WiFi.psk();
@@ -710,7 +711,7 @@ void handleSave() {
             //Delay to let data be saved, and the responce to be sent properly to the client
             delay(5000);
 
-            if (ssid && pwd && (ssid != WiFi.SSID() || pwd != WiFi.psk())) {
+            if (ssid && pwd && (ssid != getSSID() || pwd != WiFi.psk())) {
                 WiFi.begin(ssid.c_str(), pwd.c_str());
             }
 
@@ -722,6 +723,16 @@ void handleSave() {
 //Send 404 to client in case of invalid webpage being requested.
 void handleNotFound() {
     server.send(404, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>404 - Page not found</body></html>");
+}
+
+String getSSID() {
+#if ESP32
+    wifi_config_t conf;
+    esp_wifi_get_config(WIFI_IF_STA, &conf);
+    return String(reinterpret_cast<const char *>(conf.sta.ssid));
+#else
+    return WiFi.SSID();
+#endif
 }
 
 //Commented out for userst without batteries - Also timer is not done properly

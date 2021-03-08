@@ -80,6 +80,11 @@ CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yel
 #define MODE_NORMAL                     1
 #define MODE_PREVIEW_STAY_ON            2
 #define MODE_PROGRAM_ONLY               3
+#define MODE_ON_AIR                     4
+
+#define TALLY_FLAG_OFF                  0
+#define TALLY_FLAG_PROGRAM              1
+#define TALLY_FLAG_PREVIEW              2
 
 //Define Neopixel status-LED options
 #define NEOPIXEL_STATUS_FIRST           1
@@ -285,62 +290,16 @@ void loop() {
             //Handle Tally Server
             tallyServer.runLoop();
 
-            //Set tally light accordingly - LED 1 and Neopixels
-            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
-                setLED1(LED_RED);
-                setSTRIP(LED_RED);
-            } else if ((!(settings.tallyModeLED1 == MODE_PROGRAM_ONLY))                         //if not program only
-                       && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
-                           || settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)) {                //or preview stay on
-                setLED1(LED_GREEN);
-                setSTRIP(LED_GREEN);
-            } else {                                                                            //if tally is neither
-                setLED1(LED_OFF);
-                setSTRIP(LED_OFF);
-            }
+            //Set LED and Neopixel colors accordingly
+            int color = getLedColor(settings.tallyModeLED1, settings.tallyNo);
+            setLED1(color);
+            setSTRIP(color);
 
-            //Set tally light LED 2 accordingly
-            if (atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x01) {              //if tally live
-                setLED2(LED_RED);
-            } else if ((!(settings.tallyModeLED2 == MODE_PROGRAM_ONLY))                         //if not program only
-                       && ((atemSwitcher.getTallyByIndexTallyFlags(settings.tallyNo) & 0x02)    //and tally preview
-                           || settings.tallyModeLED2 == MODE_PREVIEW_STAY_ON)) {                //or preview stay on
-                setLED2(LED_GREEN);
-            } else {                                                                            //if tally is neither
-                setLED2(LED_OFF);
-            }
+            color = getLedColor(settings.tallyModeLED2, settings.tallyNo);
+            setLED2(color);
 
             //Commented out for userst without batteries - Also timer is not done properly
-            //Main loop for things that should work every second
-            // if (secLoop >= 400) {
-            //     //Get and calculate battery current
-            //     int raw = analogRead(A0);
-            //     uBatt = (double)raw / 1023 * 4.2;
-
-            //     //Set back status LED after one second to working LED_BLUE if it was changed by anything
-            //     if (lowLedOn) {
-            //         setStatusLED(LED_ORANGE);
-            //         lowLedOn = false;
-            //     }
-
-            //     //Blink every 5 seconds for one second if battery current is under 3.6V
-            //     if (lowLedCount >= 5 && uBatt <= 3.600) {
-            //         setStatusLED(LED_YELLOW);
-            //         lowLedOn = true;
-            //         lowLedCount = 0;
-            //     }
-            //     lowLedCount++;
-
-            //    //Turn stripes of and put ESP to deepsleep if battery is too low
-            //    if(uBatt <= 3.499) {
-            //        setSTRIP(LED_OFF);
-            //        setStatusLED(LED_OFF);
-            //        ESP.deepSleep(0, WAKE_NO_RFCAL);
-            //    }
-
-            //     secLoop = 0;
-            // }
-            // secLoop++;
+            // batteryLoop();
 
             //Switch state if connection is lost, dependant on which connection is lost.
             if (WiFi.status() != WL_CONNECTED) {
@@ -468,8 +427,6 @@ void setSTRIP(uint8_t color) {
         }
         neopixelsUpdated = true;
     }
-    // Serial.println("Tally:");
-    // printLeds();
 }
 
 //Set the single status LED (last LED)
@@ -485,22 +442,43 @@ void setStatusLED(uint8_t color) {
         }
         neopixelsUpdated = true;
     }
-    // Serial.println("Status:");
-    // printLeds();
 }
 
-// void printLeds(){
-//     for (int i = 0; i < settings.neopixelsAmount; i++) {
-//         Serial.print(i);
-//         Serial.print(", RGB: ");
-//         Serial.print(leds[i].r);
-//         Serial.print(", ");
-//         Serial.print(leds[i].g);
-//         Serial.print(", ");
-//         Serial.println(leds[i].b);
-//     }
-//     Serial.println();
-// }
+int getTallyState(uint16_t tallyNo) {
+    if(tallyNo >= atemSwitcher.getTallyByIndexSources()) { //out of range
+        return TALLY_FLAG_OFF;
+    }
+
+    uint8_t tallyFlag = atemSwitcher.getTallyByIndexTallyFlags(tallyNo);
+    if (tallyFlag & TALLY_FLAG_PROGRAM) {
+        return TALLY_FLAG_PROGRAM;
+    } else if (tallyFlag & TALLY_FLAG_PREVIEW) {
+        return TALLY_FLAG_PREVIEW;
+    } else {
+        return TALLY_FLAG_OFF;
+    }
+}
+
+int getLedColor(int tallyMode, int tallyNo) {
+    if(tallyMode == MODE_ON_AIR) {
+        if(atemSwitcher.getStreamStreaming()) {
+            return LED_RED;
+        }
+        return LED_OFF;
+    }
+
+    int tallyState = getTallyState(tallyNo);
+
+    if (tallyState == TALLY_FLAG_PROGRAM) {             //if tally live
+        return LED_RED;
+    } else if ((tallyState == TALLY_FLAG_PREVIEW        //if tally preview
+                || tallyMode == MODE_PREVIEW_STAY_ON)   //or preview stay on
+               && tallyMode != MODE_PROGRAM_ONLY) {     //and not program only
+        return LED_GREEN;
+    } else {                                            //if tally is neither
+        return LED_OFF;
+    }
+}
 
 //Serve setup web page to client, by sending HTML with the correct variables
 void handleRoot() {
@@ -574,7 +552,11 @@ void handleRoot() {
     html += (String) MODE_PROGRAM_ONLY + "\" ";
     if (settings.tallyModeLED1 == MODE_PROGRAM_ONLY)
         html += "selected";
-    html += ">Program only</option> </select> </td> </tr> <tr> <td>Tally Light mode (LED 2):</td> <td> <select name=\"tModeLED2\"> <option value=\"";
+    html += ">Program only</option> <option value=\"";
+    html += (String) MODE_ON_AIR + "\" ";
+    if (settings.tallyModeLED1 == MODE_ON_AIR)
+        html += "selected";
+    html += ">On Air</option> </select> </td> </tr> <tr> <td>Tally Light mode (LED 2):</td> <td> <select name=\"tModeLED2\"> <option value=\"";
     html += (String) MODE_NORMAL + "\" ";
     if (settings.tallyModeLED2 == MODE_NORMAL)
         html += "selected";
@@ -586,7 +568,11 @@ void handleRoot() {
     html += (String) MODE_PROGRAM_ONLY + "\" ";
     if (settings.tallyModeLED2 == MODE_PROGRAM_ONLY)
         html += "selected";
-    html += ">Program only</option> </select> </td> </tr> <tr> <td>Amount of Neopixels:</td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"1000\" name=\"neoPxAmount\" value=\"";
+    html += ">Program only</option> <option value=\"";
+    html += (String)MODE_ON_AIR + "\" ";
+    if (settings.tallyModeLED2 == MODE_ON_AIR)
+        html += "selected";
+    html += ">On Air</option> </select> </td> </tr> <tr> <td>Amount of Neopixels:</td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"1000\" name=\"neoPxAmount\" value=\"";
     html += settings.neopixelsAmount;
     html += "\" required /> </td> </tr> <tr> <td>Neopixel status LED: </td> <td> <select name=\"neoPxStatus\"> <option value=\"";
     html += (String) NEOPIXEL_STATUS_FIRST + "\" ";
@@ -737,3 +723,37 @@ void handleSave() {
 void handleNotFound() {
     server.send(404, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>404 - Page not found</body></html>");
 }
+
+//Commented out for userst without batteries - Also timer is not done properly
+//Main loop for things that should work every second
+// void batteryLoop() {
+//     if (secLoop >= 400) {
+//         //Get and calculate battery current
+//         int raw = analogRead(A0);
+//         uBatt = (double)raw / 1023 * 4.2;
+
+//         //Set back status LED after one second to working LED_BLUE if it was changed by anything
+//         if (lowLedOn) {
+//             setStatusLED(LED_ORANGE);
+//             lowLedOn = false;
+//         }
+
+//         //Blink every 5 seconds for one second if battery current is under 3.6V
+//         if (lowLedCount >= 5 && uBatt <= 3.600) {
+//             setStatusLED(LED_YELLOW);
+//             lowLedOn = true;
+//             lowLedCount = 0;
+//         }
+//         lowLedCount++;
+
+//        //Turn stripes of and put ESP to deepsleep if battery is too low
+//        if(uBatt <= 3.499) {
+//            setSTRIP(LED_OFF);
+//            setStatusLED(LED_OFF);
+//            ESP.deepSleep(0, WAKE_NO_RFCAL);
+//        }
+
+//         secLoop = 0;
+//     }
+//     secLoop++;
+// }

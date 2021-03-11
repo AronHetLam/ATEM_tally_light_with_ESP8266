@@ -483,7 +483,7 @@ int getLedColor(int tallyMode, int tallyNo) {
 
 //Serve setup web page to client, by sending HTML with the correct variables
 void handleRoot() {
-    String html = "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <script> function switchIpField(e) { console.log(\"switch\"); console.log(e); var target = e.srcElement || e.target; var maxLength = parseInt(target.attributes[\"maxlength\"].value, 10); var myLength = target.value.length; if (myLength >= maxLength) { var next = target.nextElementSibling; if (next != null) { if (next.className.includes(\"IP\")) { next.focus(); } } } else if (myLength == 0) { var previous = target.previousElementSibling; if (previous != null) { if (previous.className.includes(\"IP\")) { previous.focus(); } } } } function ipFieldFocus(e) { console.log(\"focus\"); console.log(e); var target = e.srcElement || e.target; target.select(); } function load() { var containers = document.getElementsByClassName(\"IP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } containers = document.getElementsByClassName(\"tIP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } toggleStaticIPFields(); } function toggleStaticIPFields() { var enabled = document.getElementById(\"staticIP\").checked; document.getElementById(\"staticIPHidden\").disabled = enabled; var staticIpFields = document.getElementsByClassName('tIP'); for (var i = 0; i < staticIpFields.length; i++) { staticIpFields[i].disabled = !enabled; } } </script> <body style=\"font-family:Verdana; white-space:nowrap;\" onload=\"load()\"> <table cellpadding=\"2\" style=\"width:100%\"> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:12px;\"> <td colspan=\"3\"> <h1>&nbsp;Tally Light setup</h1> <h2>&nbsp;Status:</h2> </td> </tr> <tr> <td><br></td> <td></td> <td style=\"width: 100%;\"></td> </tr> <tr> <td>Connection Status:</td> <td colspan=\"2\">";
+    String html = "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <script> function switchIpField(e) { console.log(\"switch\"); console.log(e); var target = e.srcElement || e.target; var maxLength = parseInt(target.attributes[\"maxlength\"].value, 10); var myLength = target.value.length; if (myLength >= maxLength) { var next = target.nextElementSibling; if (next != null) { if (next.className.includes(\"IP\")) { next.focus(); } } } else if (myLength == 0) { var previous = target.previousElementSibling; if (previous != null) { if (previous.className.includes(\"IP\")) { previous.focus(); } } } } function ipFieldFocus(e) { console.log(\"focus\"); console.log(e); var target = e.srcElement || e.target; target.select(); } function load() { var containers = document.getElementsByClassName(\"IP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } containers = document.getElementsByClassName(\"tIP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } toggleStaticIPFields(); } function toggleStaticIPFields() { var enabled = document.getElementById(\"staticIP\").checked; document.getElementById(\"staticIPHidden\").disabled = enabled; var staticIpFields = document.getElementsByClassName('tIP'); for (var i = 0; i < staticIpFields.length; i++) { staticIpFields[i].disabled = !enabled; } } </script> <style> a {color: #0F79E0}</style> <body style=\"font-family:Verdana; white-space:nowrap;\" onload=\"load()\"> <table cellpadding=\"2\" style=\"width:100%\"> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:.8em;\"> <td colspan=\"3\"> <h1>&nbsp;Tally Light setup</h1> <h2>&nbsp;Status:</h2> </td> </tr> <tr> <td><br></td> <td></td> <td style=\"width: 100%;\"></td> </tr> <tr> <td>Connection Status:</td> <td colspan=\"2\">";
     switch (WiFi.status()) {
         case WL_CONNECTED:
             html += "Connected to network";
@@ -533,7 +533,7 @@ void handleRoot() {
         html += "Disconnected - Waiting for WiFi";
     html += "</td> </tr> <tr> <td>ATEM switcher IP:</td> <td colspan=\"2\">";
     html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];
-    html += "</td> </tr> <tr> <td><br></td> </tr> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:12px;\"> <td colspan=\"3\"> <h2>&nbsp;Settings:</h2> </td> </tr> <tr> <td><br></td> </tr> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td> <input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
+    html += "</td> </tr> <tr> <td><br></td> </tr> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:.8em;\"> <td colspan=\"3\"> <h2>&nbsp;Settings:</h2> </td> </tr> <tr> <td><br></td> </tr> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td> <input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
 #if ESP32
     html += WiFi.getHostname();
 #else
@@ -629,15 +629,14 @@ void handleRoot() {
     html += settings.switcherIP[2];
     html += "\" required />. <input class=\"IP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"aIP4\" pattern=\"\\d{0,3}\" value=\"";
     html += settings.switcherIP[3];
-    html += "\" required /> </tr> <tr> <td><br></td> </tr> <tr> <td /> <td style=\"float: right;\"> <input type=\"submit\" value=\"Save Changes\" /> </td> </tr> </form> </table> </body> </html>";
-
+    html += "\" required /> </tr> <tr> <td><br></td> </tr> <tr> <td /> <td style=\"float: right;\"> <input type=\"submit\" value=\"Save Changes\" /> </td> </tr> </form> <tr bgcolor=\"#cccccc\" style=\"font-size: .8em;\"> <td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr> </table> </body> </html>";
     server.send(200, "text/html", html);
 }
 
 //Save new settings from client in EEPROM and restart the ESP8266 module
 void handleSave() {
     if (server.method() != HTTP_POST) {
-        server.send(405, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp;Tally Light setup</h1> </td> </tr> </table><br>Request without posting settings not allowed</body></html>");
+        server.send(405, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:.8em;\"> <tr> <td> <h1>&nbsp;Tally Light setup</h1> </td> </tr> </table><br>Request without posting settings not allowed</body></html>");
     } else {
         String ssid;
         String pwd;
@@ -706,7 +705,7 @@ void handleSave() {
             EEPROM.put(0, settings);
             EEPROM.commit();
 
-            server.send(200, "text/html", (String)"<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"font-family:Verdana;color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp;Tally Light setup</h1> </td> </tr> </table><br>Settings saved successfully.</body></html>");
+            server.send(200, "text/html", (String)"<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"font-family:Verdana;color:#ffffff;font-size:.8em;\"> <tr> <td> <h1>&nbsp;Tally Light setup</h1> </td> </tr> </table><br>Settings saved successfully.</body></html>");
 
             //Delay to let data be saved, and the responce to be sent properly to the client
             delay(5000);
@@ -722,7 +721,7 @@ void handleSave() {
 
 //Send 404 to client in case of invalid webpage being requested.
 void handleNotFound() {
-    server.send(404, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:12px;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>404 - Page not found</body></html>");
+    server.send(404, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:.8em;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>404 - Page not found</body></html>");
 }
 
 String getSSID() {

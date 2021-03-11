@@ -10,4 +10,9 @@ GPL licensed:
 The library is licensed under GNU GPL v3. It allows you to use the library for any project, even commercial ones, as long as you keep the code using the library open - and deliver a copy to your client. In other words, even though you might deliver a black box hardware device, you still must give your client a copy of the Arduino sketch you have uploaded to the board. And how knows; either they will improve your product, maybe do nothing at all - or mess it up so you can sell some support hours. :-)
 
 
-- kasper
+_kasper
+
+# Modifications by Aron N. Het Lam
+Additions are commented in the source code
+
+- Added support for parsing StRS command

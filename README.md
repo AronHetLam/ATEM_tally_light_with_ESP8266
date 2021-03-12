@@ -5,7 +5,9 @@
 
 Wireless tally light and 'On Air' sign for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED or LED strip. This solution is __not__ limited by the ATEM switchers' connection limit, making it possible to connect as many as you need.
 
-Should easily be convertable to use with ESP32 or, regular Arduino boards and a WiFi module, by changeing the include statements and a few other things (however, this is not tested).
+ESP32 is also supported. Depending on your board, you might need to change the pin numbers.
+
+It should easily be convertable to use with regular Arduino boards and a WiFi module, by changeing the include statements and a few other things (however, this is not tested).
 
 __DIY guide__ is available in the [wiki](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/wiki/DIY-guide). __No coding required!__
 

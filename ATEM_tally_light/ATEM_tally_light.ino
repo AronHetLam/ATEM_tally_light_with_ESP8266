@@ -420,7 +420,7 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
     }
 }
 
-//Set the color og the LED strip, except for the status LED
+//Set the color of the LED strip, except for the status LED
 void setSTRIP(uint8_t color) {
     if(numTallyLEDs > 0 && tallyLEDs[0] != color_led[color]) {
         for (int i = 0; i < numTallyLEDs; i++) {
@@ -483,7 +483,7 @@ int getLedColor(int tallyMode, int tallyNo) {
 
 //Serve setup web page to client, by sending HTML with the correct variables
 void handleRoot() {
-    String html = "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <script> function switchIpField(e) { console.log(\"switch\"); console.log(e); var target = e.srcElement || e.target; var maxLength = parseInt(target.attributes[\"maxlength\"].value, 10); var myLength = target.value.length; if (myLength >= maxLength) { var next = target.nextElementSibling; if (next != null) { if (next.className.includes(\"IP\")) { next.focus(); } } } else if (myLength == 0) { var previous = target.previousElementSibling; if (previous != null) { if (previous.className.includes(\"IP\")) { previous.focus(); } } } } function ipFieldFocus(e) { console.log(\"focus\"); console.log(e); var target = e.srcElement || e.target; target.select(); } function load() { var containers = document.getElementsByClassName(\"IP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } containers = document.getElementsByClassName(\"tIP\"); for (var i = 0; i < containers.length; i++) { var container = containers[i]; container.oninput = switchIpField; container.onfocus = ipFieldFocus; } toggleStaticIPFields(); } function toggleStaticIPFields() { var enabled = document.getElementById(\"staticIP\").checked; document.getElementById(\"staticIPHidden\").disabled = enabled; var staticIpFields = document.getElementsByClassName('tIP'); for (var i = 0; i < staticIpFields.length; i++) { staticIpFields[i].disabled = !enabled; } } </script> <style> a {color: #0F79E0}</style> <body style=\"font-family:Verdana; white-space:nowrap;\" onload=\"load()\"> <table cellpadding=\"2\" style=\"width:100%\"> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:.8em;\"> <td colspan=\"3\"> <h1>&nbsp;Tally Light setup</h1> <h2>&nbsp;Status:</h2> </td> </tr> <tr> <td><br></td> <td></td> <td style=\"width: 100%;\"></td> </tr> <tr> <td>Connection Status:</td> <td colspan=\"2\">";
+    String html = "<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0\"><title>Tally Light setup</title></head><script>function switchIpField(e){console.log(\"switch\");console.log(e);var target=e.srcElement||e.target;var maxLength=parseInt(target.attributes[\"maxlength\"].value,10);var myLength=target.value.length;if(myLength>=maxLength){var next=target.nextElementSibling;if(next!=null){if(next.className.includes(\"IP\")){next.focus();}}}else if(myLength==0){var previous=target.previousElementSibling;if(previous!=null){if(previous.className.includes(\"IP\")){previous.focus();}}}}function ipFieldFocus(e){console.log(\"focus\");console.log(e);var target=e.srcElement||e.target;target.select();}function load(){var containers=document.getElementsByClassName(\"IP\");for(var i=0;i<containers.length;i++){var container=containers[i];container.oninput=switchIpField;container.onfocus=ipFieldFocus;}containers=document.getElementsByClassName(\"tIP\");for(var i=0;i<containers.length;i++){var container=containers[i];container.oninput=switchIpField;container.onfocus=ipFieldFocus;}toggleStaticIPFields();}function toggleStaticIPFields(){var enabled=document.getElementById(\"staticIP\").checked;document.getElementById(\"staticIPHidden\").disabled=enabled;var staticIpFields=document.getElementsByClassName('tIP');for(var i=0;i<staticIpFields.length;i++){staticIpFields[i].disabled=!enabled;}}</script><style>a{color:#0F79E0}</style><body style=\"font-family:Verdana;white-space:nowrap;\"onload=\"load()\"><table cellpadding=\"2\"style=\"width:100%\"><tr bgcolor=\"#777777\"style=\"color:#ffffff;font-size:.8em;\"><td colspan=\"3\"><h1>&nbsp;Tally Light setup</h1><h2>&nbsp;Status:</h2></td></tr><tr><td><br></td><td></td><td style=\"width:100%;\"></td></tr><tr><td>Connection Status:</td><td colspan=\"2\">";
     switch (WiFi.status()) {
         case WL_CONNECTED:
             html += "Connected to network";
@@ -505,24 +505,24 @@ void handleRoot() {
             break;
     }
 
-    html += "</td> </tr> <tr> <td>Network name (SSID):</td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td>Network name (SSID):</td><td colspan=\"2\">";
     html += getSSID();
-    html += "</td> </tr> <tr> <td><br></td> </tr> <tr> <td>Signal strength:</td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td><br></td></tr><tr><td>Signal strength:</td><td colspan=\"2\">";
     html += WiFi.RSSI();
-    html += " dBm</td> </tr>";
+    html += " dBm</td></tr>";
     //Commented out for users without batteries
-    // html += "<tr> <td><br></td> </tr> <tr> <td>Battery voltage:</td> <td colspan=\"2\">";
+    // html += "<tr><td><br></td></tr><tr><td>Battery voltage:</td><td colspan=\"2\">";
     // html += dtostrf(uBatt, 0, 3, buffer);
-    // html += " V</td> </tr>";
-    html += "<tr> <td>Static IP:</td> <td colspan=\"2\">";
+    // html += " V</td></tr>";
+    html += "<tr><td>Static IP:</td><td colspan=\"2\">";
     html += settings.staticIP == true ? "True" : "False";
-    html += "</td> </tr> <tr> <td>Tally Light IP:</td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td>Tally Light IP:</td><td colspan=\"2\">";
     html += WiFi.localIP().toString();
-    html += "</td> </tr> <tr> <td>Subnet mask: </td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td>Subnet mask: </td><td colspan=\"2\">";
     html += WiFi.subnetMask().toString();
-    html += "</td> </tr> <tr> <td>Gateway: </td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td>Gateway: </td><td colspan=\"2\">";
     html += WiFi.gatewayIP().toString();
-    html += "</td> </tr> <tr> <td><br></td> </tr> <tr> <td>ATEM switcher status:</td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td><br></td></tr><tr><td>ATEM switcher status:</td><td colspan=\"2\">";
     if (atemSwitcher.hasInitialized())
         html += "Connected - Initialized";
     else if (atemSwitcher.isConnected())
@@ -531,112 +531,112 @@ void handleRoot() {
         html += "Disconnected - No response from switcher";
     else
         html += "Disconnected - Waiting for WiFi";
-    html += "</td> </tr> <tr> <td>ATEM switcher IP:</td> <td colspan=\"2\">";
+    html += "</td></tr><tr><td>ATEM switcher IP:</td><td colspan=\"2\">";
     html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];
-    html += "</td> </tr> <tr> <td><br></td> </tr> <tr bgcolor=\"#777777\" style=\"color:#ffffff;font-size:.8em;\"> <td colspan=\"3\"> <h2>&nbsp;Settings:</h2> </td> </tr> <tr> <td><br></td> </tr> <form action=\"/save\" method=\"post\"> <tr> <td>Tally Light name: </td> <td> <input type=\"text\" size=\"30\" maxlength=\"30\" name=\"tName\" value=\"";
+    html += "</td></tr><tr><td><br></td></tr><tr bgcolor=\"#777777\"style=\"color:#ffffff;font-size:.8em;\"><td colspan=\"3\"><h2>&nbsp;Settings:</h2></td></tr><tr><td><br></td></tr><form action=\"/save\"method=\"post\"><tr><td>Tally Light name: </td><td><input type=\"text\"size=\"30\"maxlength=\"30\"name=\"tName\"value=\"";
 #if ESP32
     html += WiFi.getHostname();
 #else
     html += WiFi.hostname();
 #endif
-    html += "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Tally Light number: </td> <td> <input type=\"number\" size=\"5\" min=\"1\" max=\"41\" name=\"tNo\" value=\"";
+    html += "\"required/></td></tr><tr><td><br></td></tr><tr><td>Tally Light number: </td><td><input type=\"number\"size=\"5\"min=\"1\"max=\"41\"name=\"tNo\"value=\"";
     html += (settings.tallyNo + 1);
-    html += "\" required /> </td> </tr> <tr> <td>Tally Light mode (LED 1):&nbsp;</td> <td> <select name=\"tModeLED1\"> <option value=\"";
-    html += (String) MODE_NORMAL + "\" ";
+    html += "\"required/></td></tr><tr><td>Tally Light mode (LED 1):&nbsp;</td><td><select name=\"tModeLED1\"><option value=\"";
+    html += (String) MODE_NORMAL + "\"";
     if (settings.tallyModeLED1 == MODE_NORMAL)
         html += "selected";
-    html += ">Normal</option> <option value=\"";
-    html += (String) MODE_PREVIEW_STAY_ON + "\" ";
+    html += ">Normal</option><option value=\"";
+    html += (String) MODE_PREVIEW_STAY_ON + "\"";
     if (settings.tallyModeLED1 == MODE_PREVIEW_STAY_ON)
         html += "selected";
-    html += ">Preview stay on</option> <option value=\"";
-    html += (String) MODE_PROGRAM_ONLY + "\" ";
+    html += ">Preview stay on</option><option value=\"";
+    html += (String) MODE_PROGRAM_ONLY + "\"";
     if (settings.tallyModeLED1 == MODE_PROGRAM_ONLY)
         html += "selected";
-    html += ">Program only</option> <option value=\"";
-    html += (String) MODE_ON_AIR + "\" ";
+    html += ">Program only</option><option value=\"";
+    html += (String) MODE_ON_AIR + "\"";
     if (settings.tallyModeLED1 == MODE_ON_AIR)
         html += "selected";
-    html += ">On Air</option> </select> </td> </tr> <tr> <td>Tally Light mode (LED 2):</td> <td> <select name=\"tModeLED2\"> <option value=\"";
-    html += (String) MODE_NORMAL + "\" ";
+    html += ">On Air</option></select></td></tr><tr><td>Tally Light mode (LED 2):</td><td><select name=\"tModeLED2\"><option value=\"";
+    html += (String) MODE_NORMAL + "\"";
     if (settings.tallyModeLED2 == MODE_NORMAL)
         html += "selected";
-    html += ">Normal</option> <option value=\"";
-    html += (String) MODE_PREVIEW_STAY_ON + "\" ";
+    html += ">Normal</option><option value=\"";
+    html += (String) MODE_PREVIEW_STAY_ON + "\"";
     if (settings.tallyModeLED2 == MODE_PREVIEW_STAY_ON)
         html += "selected";
-    html += ">Preview stay on</option> <option value=\"";
-    html += (String) MODE_PROGRAM_ONLY + "\" ";
+    html += ">Preview stay on</option><option value=\"";
+    html += (String) MODE_PROGRAM_ONLY + "\"";
     if (settings.tallyModeLED2 == MODE_PROGRAM_ONLY)
         html += "selected";
-    html += ">Program only</option> <option value=\"";
-    html += (String)MODE_ON_AIR + "\" ";
+    html += ">Program only</option><option value=\"";
+    html += (String)MODE_ON_AIR + "\"";
     if (settings.tallyModeLED2 == MODE_ON_AIR)
         html += "selected";
-    html += ">On Air</option> </select> </td> </tr> <tr> <td>Amount of Neopixels:</td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"1000\" name=\"neoPxAmount\" value=\"";
+    html += ">On Air</option></select></td></tr><tr><td>Amount of Neopixels:</td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"1000\"name=\"neoPxAmount\"value=\"";
     html += settings.neopixelsAmount;
-    html += "\" required /> </td> </tr> <tr> <td>Neopixel status LED: </td> <td> <select name=\"neoPxStatus\"> <option value=\"";
-    html += (String) NEOPIXEL_STATUS_FIRST + "\" ";
+    html += "\"required/></td></tr><tr><td>Neopixel status LED: </td><td><select name=\"neoPxStatus\"><option value=\"";
+    html += (String) NEOPIXEL_STATUS_FIRST + "\"";
     if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_FIRST)
         html += "selected";
-    html += ">First LED</option> <option value=\"";
-    html += (String) NEOPIXEL_STATUS_LAST + "\" ";
+    html += ">First LED</option><option value=\"";
+    html += (String) NEOPIXEL_STATUS_LAST + "\"";
     if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_LAST)
         html += "selected";
-    html += ">Last LED</option> <option value=\"";
-    html += (String) NEOPIXEL_STATUS_NONE + "\" ";
+    html += ">Last LED</option><option value=\"";
+    html += (String) NEOPIXEL_STATUS_NONE + "\"";
     if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_NONE)
         html += "selected";
-    html += ">None</option> </select> </td> </tr> <tr> <td> Neopixel brightness: </td> <td> <input type=\"number\" size=\"5\" min=\"0\" max=\"255\" name=\"neoPxBright\" value=\"";
+    html += ">None</option></select></td></tr><tr><td> Neopixel brightness: </td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"255\"name=\"neoPxBright\"value=\"";
     html += settings.NeopixelBrightness;
-    html +=  "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Network name(SSID): </td> <td> <input type =\"text\" size=\"30\" maxlength=\"30\" name=\"ssid\" value=\"";
+    html +=  "\"required/></td></tr><tr><td><br></td></tr><tr><td>Network name(SSID): </td><td><input type =\"text\"size=\"30\"maxlength=\"30\"name=\"ssid\"value=\"";
     html += getSSID();
-    html += "\" required /> </td> </tr> <tr> <td>Network password: </td> <td> <input type=\"password\" size=\"30\" maxlength=\"30\" name=\"pwd\" pattern=\"^$|.{8,32}\" value=\"";
+    html += "\"required/></td></tr><tr><td>Network password: </td><td><input type=\"password\"size=\"30\"maxlength=\"30\"name=\"pwd\"pattern=\"^$|.{8,32}\"value=\"";
     if (WiFi.isConnected()) //As a minimum security meassure, to only send the wifi password if it's currently connected to the given network.
         html += WiFi.psk();
-    html += "\" /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>Use static IP: </td> <td> <input type=\"hidden\" id=\"staticIPHidden\" name=\"staticIP\" value=\"false\" /> <input id=\"staticIP\" type=\"checkbox\" name=\"staticIP\" value=\"true\" onchange=\"toggleStaticIPFields()\" ";
+    html += "\"/></td></tr><tr><td><br></td></tr><tr><td>Use static IP: </td><td><input type=\"hidden\"id=\"staticIPHidden\"name=\"staticIP\"value=\"false\"/><input id=\"staticIP\"type=\"checkbox\"name=\"staticIP\"value=\"true\"onchange=\"toggleStaticIPFields()\"";
     if (settings.staticIP)
         html += "checked";
-    html += "/> </td> </tr> <tr> <td>Tally Light IP: </td> <td> <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"tIP1\" pattern=\"\\d{0,3}\" value=\"";
+    html += "/></td></tr><tr><td>Tally Light IP: </td><td><input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"tIP1\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyIP[0];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"tIP2\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"tIP2\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyIP[1];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"tIP3\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"tIP3\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyIP[2];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"tIP4\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"tIP4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyIP[3];
-    html += "\" required /> </td> </tr> <tr> <td>Subnet mask: </td> <td> <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"mask1\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/></td></tr><tr><td>Subnet mask: </td><td><input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"mask1\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallySubnetMask[0];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"mask2\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"mask2\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallySubnetMask[1];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"mask3\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"mask3\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallySubnetMask[2];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"mask4\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"mask4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallySubnetMask[3];
-    html += "\" required /> </td> </tr> <tr> <td>Gateway: </td> <td> <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"gate1\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/></td></tr><tr><td>Gateway: </td><td><input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"gate1\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyGateway[0];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"gate2\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"gate2\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyGateway[1];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"gate3\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"gate3\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyGateway[2];
-    html += "\" required />. <input class=\"tIP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"gate4\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"gate4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyGateway[3];
-    html += "\" required /> </td> </tr> <tr> <td><br></td> </tr> <tr> <td>ATEM switcher IP: </td> <td> <input class=\"IP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"aIP1\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/></td></tr><tr><td><br></td></tr><tr><td>ATEM switcher IP: </td><td><input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP1\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[0];
-    html += "\" required />. <input class=\"IP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"aIP2\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP2\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[1];
-    html += "\" required />. <input class=\"IP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"aIP3\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP3\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[2];
-    html += "\" required />. <input class=\"IP\" type=\"text\" size=\"3\" maxlength=\"3\" name=\"aIP4\" pattern=\"\\d{0,3}\" value=\"";
+    html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[3];
-    html += "\" required /> </tr> <tr> <td><br></td> </tr> <tr> <td /> <td style=\"float: right;\"> <input type=\"submit\" value=\"Save Changes\" /> </td> </tr> </form> <tr bgcolor=\"#cccccc\" style=\"font-size: .8em;\"> <td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr> </table> </body> </html>";
+    html += "\"required/></tr><tr><td><br></td></tr><tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
     server.send(200, "text/html", html);
 }
 
 //Save new settings from client in EEPROM and restart the ESP8266 module
 void handleSave() {
     if (server.method() != HTTP_POST) {
-        server.send(405, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:.8em;\"> <tr> <td> <h1>&nbsp;Tally Light setup</h1> </td> </tr> </table><br>Request without posting settings not allowed</body></html>");
+        server.send(405, "text/html", "<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body style=\"font-family:Verdana;\"><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp;Tally Light setup</h1></td></tr></table><br>Request without posting settings not allowed</body></html>");
     } else {
         String ssid;
         String pwd;
@@ -705,7 +705,7 @@ void handleSave() {
             EEPROM.put(0, settings);
             EEPROM.commit();
 
-            server.send(200, "text/html", (String)"<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"font-family:Verdana;color:#ffffff;font-size:.8em;\"> <tr> <td> <h1>&nbsp;Tally Light setup</h1> </td> </tr> </table><br>Settings saved successfully.</body></html>");
+            server.send(200, "text/html", (String)"<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"font-family:Verdana;color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp;Tally Light setup</h1></td></tr></table><br>Settings saved successfully.</body></html>");
 
             //Delay to let data be saved, and the responce to be sent properly to the client
             delay(5000);
@@ -721,7 +721,7 @@ void handleSave() {
 
 //Send 404 to client in case of invalid webpage being requested.
 void handleNotFound() {
-    server.send(404, "text/html", "<!DOCTYPE html> <html> <head> <meta charset=\"ASCII\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Tally Light setup</title> </head> <body style=\"font-family:Verdana;\"> <table bgcolor=\"#777777\" border=\"0\" width=\"100%\" cellpadding=\"1\" style=\"color:#ffffff;font-size:.8em;\"> <tr> <td> <h1>&nbsp Tally Light setup</h1> </td> </tr> </table><br>404 - Page not found</body></html>");
+    server.send(404, "text/html", "<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body style=\"font-family:Verdana;\"><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp Tally Light setup</h1></td></tr></table><br>404 - Page not found</body></html>");
 }
 
 String getSSID() {

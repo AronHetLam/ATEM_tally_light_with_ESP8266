@@ -69,7 +69,7 @@
 #define LED_ORANGE  7
 
 //Map "old" LED colors to CRGB colors
-CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Pink, CRGB::White, CRGB::Orange };
+CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Fuchsia, CRGB::White, CRGB::Orange };
 
 //Define states
 #define STATE_STARTING                  0

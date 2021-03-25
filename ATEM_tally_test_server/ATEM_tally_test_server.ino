@@ -302,6 +302,11 @@ void loop() {
             break;
     }
 
+    //Show stip only on updates
+    if(neopixelsUpdated) {
+        FastLED.show();
+        neopixelsUpdated = false;
+    }
 
     //Handle web interface
     server.handleClient();

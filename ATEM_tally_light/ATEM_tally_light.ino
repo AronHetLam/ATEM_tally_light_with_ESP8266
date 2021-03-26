@@ -18,6 +18,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// #define DEBUG_LED_STRIP
 #define FASTLED_ESP8266_DMA
 
 //Include libraries:
@@ -69,7 +70,7 @@
 #define LED_ORANGE  7
 
 //Map "old" LED colors to CRGB colors
-CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Yellow, CRGB::Fuchsia, CRGB::White, CRGB::Orange };
+CRGB color_led[8] = {CRGB::Black, CRGB::Red, CRGB::Lime, CRGB::Blue, CRGB::Yellow, CRGB::Fuchsia, CRGB::White, CRGB::Orange};
 
 //Define states
 #define STATE_STARTING                  0
@@ -328,6 +329,9 @@ void loop() {
     //Show stip only on updates
     if(neopixelsUpdated) {
         FastLED.show();
+#ifdef DEBUG_LED_STRIP
+        Serial.println("Updated LEDs");
+#endif
         neopixelsUpdated = false;
     }
 
@@ -427,6 +431,10 @@ void setSTRIP(uint8_t color) {
             tallyLEDs[i] = color_led[color];
         }
         neopixelsUpdated = true;
+#ifdef DEBUG_LED_STRIP
+        Serial.println("Tally:  ");
+        printLeds();
+#endif
     }
 }
 
@@ -442,8 +450,27 @@ void setStatusLED(uint8_t color) {
             }
         }
         neopixelsUpdated = true;
+#ifdef DEBUG_LED_STRIP
+        Serial.println("Status: ");
+        printLeds();
+#endif
     }
 }
+
+#ifdef DEBUG_LED_STRIP
+void printLeds() {
+    for (int i = 0; i < settings.neopixelsAmount; i++) {
+        Serial.print(i);
+        Serial.print(", RGB: ");
+        Serial.print(leds[i].r);
+        Serial.print(", ");
+        Serial.print(leds[i].g);
+        Serial.print(", ");
+        Serial.println(leds[i].b);
+    }
+    Serial.println();
+}
+#endif
 
 int getTallyState(uint16_t tallyNo) {
     if(tallyNo >= atemSwitcher.getTallyByIndexSources()) { //out of range

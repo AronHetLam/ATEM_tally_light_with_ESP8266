@@ -81,6 +81,7 @@ void ATEMbase::connect(const boolean useFixedPortNumber) {
 	_initPayloadSent = false;		// Will be true after initial payload of data is delivered (regular 12-byte ping packages are transmitted.)
 	_hasInitialized = false;		// Will be true after initial payload of data is resent and received well
 	_isConnected = false;			// Will be true after the initial hello-package handshakes.
+	_isRejected = false;			// Will be true if the connection was rejected during hello-package handshakes.
 	_sessionID = 0x53AB;			// Temporary session ID - a new will be given back from ATEM.
 	_lastContact = millis();  		// Setting this, because even though we haven't had contact, it constitutes an attempt that should be responded to at least
 	memset(_missedInitializationPackages, 0xFF, (ATEM_maxInitPackageCount+7)/8);
@@ -145,7 +146,8 @@ void ATEMbase::runLoop(uint16_t delayTime) {
 					if (headerBitmask & ATEM_headerCmd_HelloPacket)	{	// Respond to "Hello" packages:
 						_isConnected = true;
 					
-						// _packetBuffer[12]	The ATEM will return a "2" in this return package of same length. If the ATEM returns "3" it means "fully booked" (no more clients can connect) and a "4" seems to be a kind of reconnect (seen when you drop the connection and the ATEM desperately tries to figure out what happened...)
+						_Udp.read(_packetBuffer, 1); // Read 13th byte to get hello packet type.
+						_isRejected = _packetBuffer[0] == 3; // _packetBuffer[12]	The ATEM will return a "2" in this return package of same length. If the ATEM returns "3" it means "fully booked" (no more clients can connect) and a "4" seems to be a kind of reconnect (seen when you drop the connection and the ATEM desperately tries to figure out what happened...)
 						// _packetBuffer[15]	This number seems to increment with about 3 each time a new client tries to connect to ATEM. It may be used to judge how many client connections has been made during the up-time of the switcher?
 						
 						_wipeCleanPacketBuffer();
@@ -321,6 +323,13 @@ bool ATEMbase::isConnected()	{
  */
 bool ATEMbase::hasInitialized()	{
 	return _hasInitialized;
+}
+
+/**
+ * If true, the connection was rejected in the first responce, mening no empty spot.
+ */
+bool ATEMbase::isRejected() {
+	return _isRejected;
 }
 
 

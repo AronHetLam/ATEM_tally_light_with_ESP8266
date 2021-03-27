@@ -69,6 +69,7 @@ class ATEMbase
 	uint8_t _initPayloadSentAtPacketId;	// The Remote Package ID at which point the initialization payload was completed.
 	boolean _hasInitialized;  			// If true, all initial payload packets has been received during requests for resent - and we are completely ready to rock!
 	boolean _isConnected;				// Set true if we have received a hello package from the switcher.
+	boolean _isRejected;				// Set true if the conencteion was rejected in hello package (due to connection limit).
 	uint16_t _sessionID;				// Session id of session, given by ATEM switcher
 	unsigned long _lastContact;			// Last time (millis) the switcher sent a packet to us.
 	uint16_t _lastRemotePacketID;		// The most recent Remote Packet Id from switcher
@@ -103,6 +104,7 @@ class ATEMbase
 	
 	bool isConnected();
 	bool hasInitialized();
+	bool isRejected();
 
   	void serialOutput(uint8_t level);
 	bool hasTimedOut(unsigned long time, unsigned long timeout);

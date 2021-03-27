@@ -174,7 +174,7 @@ void TallyServer::runLoop() {
                         if (flags & TALLY_SERVER_FLAG_HELLO) {//Respond to first hello packet.
                             _resetBuffer();
                             _createHeader(client, TALLY_SERVER_FLAG_HELLO, 20);
-                            _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_ACCEPTED;
+                            _buffer[12] = TALLY_SERVER_CONNECTION_ACCEPTED;
                             _sendBuffer(client, 20);
                             client->_isConnected = true;
                             #if TALLY_SERVER_DEBUG
@@ -201,7 +201,7 @@ void TallyServer::runLoop() {
                         client->_tallyIP = remoteIP;
                         client->_tallyPort = remotePort;
                         _createHeader(client, TALLY_SERVER_FLAG_HELLO, 20);
-                        _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_REJECTED;
+                        _buffer[12] = TALLY_SERVER_CONNECTION_REJECTED;
                         _sendBuffer(client, 20);
                         #if TALLY_SERVER_DEBUG
                         Serial.print(client->_tallyIP);
@@ -290,7 +290,7 @@ void TallyServer::runLoop() {
             if(_hasTimePassed(client->_lastSend, TALLY_SERVER_KEEP_ALIVE_MSG_INTERVAL)) {
                 _resetBuffer();
                 _createHeader(client, TALLY_SERVER_FLAG_HELLO, 20);
-                _buffer[12] = TALLY_SERVER_FLAG_CONNECTION_ACCEPTED;
+                _buffer[12] = TALLY_SERVER_CONNECTION_ACCEPTED;
                 _sendBuffer(client, 20);
                 #if TALLY_SERVER_DEBUG
                 Serial.print(client->_tallyIP);

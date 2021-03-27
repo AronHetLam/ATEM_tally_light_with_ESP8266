@@ -552,8 +552,10 @@ void handleRoot() {
     html += "</td></tr><tr><td><br></td></tr><tr><td>ATEM switcher status:</td><td colspan=\"2\">";
     if (atemSwitcher.hasInitialized())
         html += "Connected - Initialized";
+    else if (atemSwitcher.isRejected())
+        html += "Connection rejected - No empty spot";
     else if (atemSwitcher.isConnected())
-        html += "Connected - Wating for initialization - Connection might have been rejected";
+        html += "Connected - Wating for initialization";
     else if (WiFi.status() == WL_CONNECTED)
         html += "Disconnected - No response from switcher";
     else

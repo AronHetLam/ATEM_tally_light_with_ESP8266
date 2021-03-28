@@ -303,19 +303,8 @@ void loop() {
             //Commented out for userst without batteries - Also timer is not done properly
             // batteryLoop();
 
-            //Switch state if connection is lost, dependant on which connection is lost.
-            if (WiFi.status() != WL_CONNECTED) {
-                Serial.println("------------------------");
-                Serial.println("WiFi connection lost...");
-                changeState(STATE_CONNECTING_TO_WIFI);
-
-                //Force atem library to reset connection, in order for status to read correctly on website.
-                atemSwitcher.begin(settings.switcherIP);
-
-                //Reset tally server's tally flags, They won't get the message, but it'll be reset for when the connectoin is back.
-                tallyServer.resetTallyFlags();
-
-            } else if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
+            //Switch state if ATEM connection is lost...
+            if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
                 Serial.println("------------------------");
                 Serial.println("Connection to Switcher lost...");
                 changeState(STATE_CONNECTING_TO_SWITCHER);
@@ -326,7 +315,21 @@ void loop() {
             break;
     }
 
-    //Show stip only on updates
+    //Switch state if WiFi connection is lost...
+    if (WiFi.status() != WL_CONNECTED && state != STATE_CONNECTING_TO_WIFI) {
+        Serial.println("------------------------");
+        Serial.println("WiFi connection lost...");
+        changeState(STATE_CONNECTING_TO_WIFI);
+
+        //Force atem library to reset connection, in order for status to read correctly on website.
+        atemSwitcher.begin(settings.switcherIP);
+        atemSwitcher.connect();
+
+        //Reset tally server's tally flags, They won't get the message, but it'll be reset for when the connectoin is back.
+        tallyServer.resetTallyFlags();
+    }
+
+    //Show strip only on updates
     if(neopixelsUpdated) {
         FastLED.show();
 #ifdef DEBUG_LED_STRIP

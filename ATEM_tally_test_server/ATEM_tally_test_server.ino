@@ -298,7 +298,7 @@ void loop() {
                 tallyServer.resetTallyFlags();
             }
             break;
-        
+
         default:
             break;
     }

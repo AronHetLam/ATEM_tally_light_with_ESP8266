@@ -314,7 +314,7 @@ ATEMmin::ATEMmin(){}
 			if(!strcmp_P(cmdStr, PSTR("TlIn"))) {
 				
 				sources = word(_packetBuffer[0],_packetBuffer[1]);
-				if (sources<=40) {
+				if (sources<=510) {
 					#if ATEM_debug
 					temp = atemTallyByIndexSources;
 					#endif

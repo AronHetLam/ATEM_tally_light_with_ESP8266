@@ -96,6 +96,8 @@ CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Lime, CRGB::Blue, CRGB::Yell
 //FastLED
 #if ESP32
 #define DATA_PIN    12
+#elif ARDUINO_ESP8266_NODEMCU
+#define DATA_PIN    7
 #else
 #define DATA_PIN    D7
 #endif

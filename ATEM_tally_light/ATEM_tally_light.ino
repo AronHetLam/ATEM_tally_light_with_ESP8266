@@ -207,6 +207,8 @@ void setup() {
 
     Serial.println(settings.tallyName);
     //Serial.println(sizeof(settings)); //Check size of settings struct
+
+    WiFi.persistent(false);
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     }
@@ -743,6 +745,7 @@ void handleSave() {
             delay(5000);
 
             if (ssid && pwd && (ssid != getSSID() || pwd != WiFi.psk())) {
+                WiFi.persistent(true);
                 WiFi.begin(ssid.c_str(), pwd.c_str());
             }
 

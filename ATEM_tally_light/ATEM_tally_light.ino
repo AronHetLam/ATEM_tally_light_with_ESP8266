@@ -148,6 +148,9 @@ bool firstRun = true;
 // double uBatt = 0;
 // char buffer[3];
 
+bool pressed = false;
+unsigned long buttonTimer = 0;
+
 //Perform initial setup on power on
 void setup() {
     //Init pins for LED
@@ -158,6 +161,8 @@ void setup() {
     pinMode(PIN_RED2, OUTPUT);
     pinMode(PIN_GREEN2, OUTPUT);
     pinMode(PIN_BLUE2, OUTPUT);
+
+    pinMode(D3, INPUT_PULLUP);
 
     setBothLEDs(LED_BLUE);
 
@@ -344,6 +349,21 @@ void loop() {
 
     //Handle web interface
     server.handleClient();
+
+    if(millis() - buttonTimer > 50) {
+        buttonTimer = millis();
+        if(!digitalRead(D3)) {
+            if(!pressed) {
+                pressed = true;
+                settings.tallyNo ++;
+                if(settings.tallyNo > 41) {
+                    settings.tallyNo = 0;
+                }
+            }
+        } else {
+            pressed = false;
+        }
+    }
 }
 
 //Handle the change of states in the program

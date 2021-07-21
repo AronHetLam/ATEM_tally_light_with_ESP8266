@@ -169,9 +169,6 @@ void setup() {
     Serial.println("########################");
     Serial.println("Serial started");
 
-    //save flash memory from being written too without need.
-    //WiFi.persistent(false);
-
     //Read settings from EEPROM. Settings struct takes 72 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
     EEPROM.begin(72); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);

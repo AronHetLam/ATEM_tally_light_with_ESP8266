@@ -193,6 +193,8 @@ void setup() {
 
     Serial.println(settings.tallyName);
     //Serial.println(sizeof(settings)); //Check size of settings struct
+
+    WiFi.persistent(false);
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     }
@@ -243,6 +245,7 @@ void loop() {
                     changeState(STATE_RUNNING);
                 } else if (firstRun) {
                     firstRun = false;
+                    Serial.println("Unable to connect. Serving \"Tally Light setup\" WiFi for configuration, while still trying to connect...");
                     WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                     WiFi.softAP("Tally Test server setup");
                     setBothLEDs(LED_WHITE);
@@ -702,6 +705,7 @@ void handleSave() {
             delay(5000);
 
             if (ssid && pwd && (ssid != getSSID() || pwd != WiFi.psk())) {
+                WiFi.persistent(true);
                 WiFi.begin(ssid.c_str(), pwd.c_str());
             }
 

@@ -169,10 +169,7 @@ void setup() {
     Serial.println("########################");
     Serial.println("Serial started");
 
-    //save flash memory from being written too without need.
-    //WiFi.persistent(false); // PSK Per the ESP documentation, flash will only be written to if the WiFi parameters change.. Its ok to leave on
-
-    //Read settings from EEPROM. Settings struct takes 72 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
+    //Read settings from EEPROM. WIFI settings are stored seperately by the ESP
     EEPROM.begin(sizeof(settings)); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);
 
@@ -208,8 +205,6 @@ void setup() {
     FastLED.show();
 
     Serial.println(settings.tallyName);
-
-    // PSK WiFi.persistent(false); // PSK Per the ESP documentation, flash will only be written to if the WiFi parameters change.. Its ok to leave on
 
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
@@ -347,7 +342,7 @@ void loop() {
     //Handle web interface
     server.handleClient();
 
-    delay(100);
+    //delay(100);
 }
 
 //Handle the change of states in the program
@@ -748,18 +743,20 @@ void handleSave() {
             server.send(200, "text/html", (String)"<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"font-family:Verdana;color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp;Tally Light setup</h1></td></tr></table><br>Settings saved successfully.</body></html>");
 
             // Delay to let data be saved, and the response to be sent properly to the client
-            server.close(); // PSK Close allowed me to ensure the response got to the client and take the delay down from 5000 ms to 100 ms
+            server.close(); // Close server to flush and ensure the response gets to the client
             delay(100);
 
-            // Change from AP mode into STA mode to try to connect to your router
-            WiFi.mode(WIFI_STA); // Disable softAP if connection is successful
-            delay(100); // Give it time to switch over to STA mode (this is important on the ESP32 at least
+            // Change from into STA mode for after restart
+            WiFi.mode(WIFI_STA);
+            delay(100); // Give it time to switch over to STA mode (this is important on the ESP32 at least)
 
             if (ssid && pwd) {
-                // PSK Pass in false so we don't waste time trying to connect, just save the new SSID/PSK
-                wl_status_t status = WiFi.begin(ssid.c_str(), pwd.c_str(),false);
+                WiFi.persistent(true); // Needed by ESP8266
+                // Pass in false as 5th parameter so we don't waste time trying to connect, just save the new SSID/PSK
+                WiFi.begin(ssid.c_str(), pwd.c_str(), 0, NULL, false);
             }
 
+            //Delay to apply settings before restart
             delay(100);
             ESP.restart();
         }

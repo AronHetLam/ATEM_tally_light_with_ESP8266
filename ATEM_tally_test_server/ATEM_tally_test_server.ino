@@ -704,13 +704,14 @@ void handleSave() {
             server.close(); // Close server to flush and ensure the response gets to the client
             delay(100);
 
-            // Change from into STA mode for after restart
+            // Change into STA mode to disable softAP
             WiFi.mode(WIFI_STA);
             delay(100); // Give it time to switch over to STA mode (this is important on the ESP32 at least)
 
             if (ssid && pwd) {
                 WiFi.persistent(true); // Needed by ESP8266
-                // Pass in false as 5th parameter so we don't waste time trying to connect, just save the new SSID/PSK
+                // Pass in 'false' as 5th (connect) argument so we don't waste time trying to connect, just save the new SSID/PSK
+                // 3rd argument is channel - '0' is default. 4th argument is BSSID - 'NULL' is default.
                 WiFi.begin(ssid.c_str(), pwd.c_str(), 0, NULL, false);
             }
 

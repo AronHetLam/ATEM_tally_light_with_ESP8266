@@ -339,8 +339,6 @@ void loop() {
 
     //Handle web interface
     server.handleClient();
-
-    //delay(100);
 }
 
 //Handle the change of states in the program

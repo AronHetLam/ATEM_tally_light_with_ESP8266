@@ -21,6 +21,8 @@
 // #define DEBUG_LED_STRIP
 #define FASTLED_ESP8266_DMA
 
+#define CAMERA_CONTROL 1
+
 //Include libraries:
 #if ESP32
 #include <esp_wifi.h>
@@ -132,6 +134,20 @@ struct Settings {
     IPAddress tallySubnetMask;
     IPAddress tallyGateway;
     IPAddress switcherIP;
+#ifdef CAMERA_CONTROL
+#define NUM_CAMERAS 8
+    IPAddress cameraIP[NUM_CAMERAS];
+    // These values are joystick dependent and used to store the auto calibration
+    uint16_t panMin;
+    uint16_t panMid;
+    uint16_t panMax;
+    uint16_t tiltMin;
+    uint16_t tiltMid;
+    uint16_t tiltMax;
+    uint16_t zoomMin;
+    uint16_t zoomMid;
+    uint16_t zoomMax;
+#endif
     uint16_t neopixelsAmount;
     uint8_t neopixelStatusLEDOption;
     uint8_t NeopixelBrightness;
@@ -150,6 +166,11 @@ bool firstRun = true;
 
 //Perform initial setup on power on
 void setup() {
+    //Start Serial
+    Serial.begin(115200);
+    Serial.println("########################");
+    Serial.println("Serial started");
+    
     //Init pins for LED
     pinMode(PIN_RED1, OUTPUT);
     pinMode(PIN_GREEN1, OUTPUT);
@@ -164,14 +185,13 @@ void setup() {
     //Setup current-measuring pin - Commented out for users without batteries
     // pinMode(A0, INPUT);
 
-    //Start Serial
-    Serial.begin(115200);
-    Serial.println("########################");
-    Serial.println("Serial started");
-
     //Read settings from EEPROM. WIFI settings are stored seperately by the ESP
     EEPROM.begin(sizeof(settings)); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);
+
+#ifdef CAMERA_CONTROL
+    cameraControlSetup();
+#endif
 
     //Initialize LED strip
     if (0 < settings.neopixelsAmount && settings.neopixelsAmount <= 1000) {
@@ -339,6 +359,10 @@ void loop() {
 
     //Handle web interface
     server.handleClient();
+
+#ifdef CAMERA_CONTROL
+    cameraControlLoop();
+#endif
 }
 
 //Handle the change of states in the program
@@ -533,6 +557,21 @@ void handleRoot() {
             html += "Timeout";
             break;
     }
+    html += "</td></tr><tr><td>Internal State:</td><td colspan=\"2\">";
+    switch (state) {
+        case STATE_STARTING:
+            html += "Starting";
+            break;
+        case STATE_CONNECTING_TO_WIFI:
+            html += "Connecting to WiFi";
+            break;
+        case STATE_CONNECTING_TO_SWITCHER:
+            html += "Connecting to Switcher";
+            break;
+        case STATE_RUNNING:
+            html += "Running...";
+            break;
+    }
 
     html += "</td></tr><tr><td>Network name (SSID):</td><td colspan=\"2\">";
     html += getSSID();
@@ -564,6 +603,15 @@ void handleRoot() {
         html += "Disconnected - Waiting for WiFi";
     html += "</td></tr><tr><td>ATEM switcher IP:</td><td colspan=\"2\">";
     html += (String)settings.switcherIP[0] + '.' + settings.switcherIP[1] + '.' + settings.switcherIP[2] + '.' + settings.switcherIP[3];
+#ifdef CAMERA_CONTROL
+    html += "</td></tr><tr><td><br></td></tr><tr><td>Joystick Pan:</td><td colspan=\"2\">";
+    html += String(settings.panMin) + " | " + String(settings.panMid) + " | " + String(settings.panMax);
+    html += "</td></tr><tr><td>Joystick Tilt:</td><td colspan=\"2\">";
+    html += String(settings.tiltMin) + " | " + String(settings.tiltMid) + " | " + String(settings.tiltMax);
+    html += "</td></tr><tr><td>Joystick Zoom:</td><td colspan=\"2\">";
+    html += String(settings.zoomMin) + " | " + String(settings.zoomMid) + " | " + String(settings.zoomMax);
+#endif
+
     html += "</td></tr><tr><td><br></td></tr><tr bgcolor=\"#777777\"style=\"color:#ffffff;font-size:.8em;\"><td colspan=\"3\"><h2>&nbsp;Settings:</h2></td></tr><tr><td><br></td></tr><form action=\"/save\"method=\"post\"><tr><td>Tally Light name: </td><td><input type=\"text\"size=\"30\"maxlength=\"30\"name=\"tName\"value=\"";
 #if ESP32
     html += WiFi.getHostname();
@@ -652,7 +700,8 @@ void handleRoot() {
     html += settings.tallyGateway[2];
     html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"gate4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyGateway[3];
-    html += "\"required/></td></tr><tr><td><br></td></tr><tr><td>ATEM switcher IP: </td><td><input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP1\"pattern=\"\\d{0,3}\"value=\"";
+    html += "\"required/></td></tr><tr><td><br></td></tr>";
+    html += "<tr><td>ATEM switcher IP: </td><td><input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP1\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[0];
     html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP2\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[1];
@@ -660,7 +709,23 @@ void handleRoot() {
     html += settings.switcherIP[2];
     html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[3];
-    html += "\"required/></tr><tr><td><br></td></tr><tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
+    html += "\"required/></tr><tr><td><br></td></tr>";
+#ifdef CAMERA_CONTROL
+    // Cameras
+    for( int i = 0; i < NUM_CAMERAS; i++ ) {
+      html += "<tr><td>Camera " + String(i+1) + " IP: </td><td><input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"c" + String(i+1) + "IP1\"pattern=\"\\d{0,3}\"value=\"";
+      html += settings.cameraIP[i][0];
+      html += "\"/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"c" + String(i+1) + "IP2\"pattern=\"\\d{0,3}\"value=\"";
+      html += settings.cameraIP[i][1];
+      html += "\"/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"c" + String(i+1) + "IP3\"pattern=\"\\d{0,3}\"value=\"";
+      html += settings.cameraIP[i][2];
+      html += "\"/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"c" + String(i+1) + "IP4\"pattern=\"\\d{0,3}\"value=\"";
+      html += settings.cameraIP[i][3];
+      html += "\"/></tr>";
+    }
+#endif
+    html += "<tr><td><br></td></tr>";
+    html += "<tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
     server.send(200, "text/html", html);
 }
 
@@ -730,6 +795,19 @@ void handleSave() {
             } else if (var == "aIP4") {
                 settings.switcherIP[3] = val.toInt();
             }
+#ifdef CAMERA_CONTROL
+            for( int i = 0; i < NUM_CAMERAS; i++ ) {
+              if (var == "c" + String(i+1) +"IP1") {
+                settings.cameraIP[i][0] = val.toInt();
+              } else if (var == "c" + String(i+1) +"IP2") {
+                settings.cameraIP[i][1] = val.toInt();
+              } else if (var == "c" + String(i+1) +"IP3") {
+                settings.cameraIP[i][2] = val.toInt();
+              } else if (var == "c" + String(i+1) +"IP4") {
+                settings.cameraIP[i][3] = val.toInt();
+              }
+            }
+#endif
         }
 
         if (change) {

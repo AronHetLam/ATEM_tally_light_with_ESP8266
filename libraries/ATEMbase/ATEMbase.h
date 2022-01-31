@@ -51,6 +51,8 @@ you can keep a clear conscience: http://skaarhoj.com/about/licenses/
 
 #define ATEM_debug 0				// If "1" (true), more debugging information may hit the serial monitor, in particular when _serialDebug = 0x80. Setting this to "0" is recommended for production environments since it saves on flash memory.
 
+#define ATEM_maxPacketId 1<<15	// ATEM wraps ID at bit 15, not 16
+
 class ATEMbase
 {
   protected:

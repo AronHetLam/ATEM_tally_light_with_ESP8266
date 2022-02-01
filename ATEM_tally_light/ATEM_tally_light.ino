@@ -19,7 +19,7 @@
 */
 
 // #define DEBUG_LED_STRIP
-#define FASTLED_ESP8266_DMA
+#define FASTLED_ALLOW_INTERRUPTS 0
 
 //Include libraries:
 #if ESP32

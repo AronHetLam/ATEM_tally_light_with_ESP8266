@@ -265,14 +265,14 @@ void loop() {
             // Initialize a connection to the switcher:
             if (firstRun) {
                 atemSwitcher.begin(settings.switcherIP);
-                //atemSwitcher.serialOutput(0x80); //Makes Atem library print debug info
+                //atemSwitcher.serialOutput(0xff); //Makes Atem library print debug info
                 Serial.println("------------------------");
                 Serial.println("Connecting to switcher...");
                 Serial.println((String)"Switcher IP:         " + settings.switcherIP[0] + "." + settings.switcherIP[1] + "." + settings.switcherIP[2] + "." + settings.switcherIP[3]);
                 firstRun = false;
             }
             atemSwitcher.runLoop();
-            if (atemSwitcher.hasInitialized()) {
+            if (atemSwitcher.isConnected()) {
                 changeState(STATE_RUNNING);
                 Serial.println("Connected to switcher");
             }
@@ -303,7 +303,7 @@ void loop() {
             // batteryLoop();
 
             //Switch state if ATEM connection is lost...
-            if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
+            if (!atemSwitcher.isConnected()) { // will return false if the connection was lost
                 Serial.println("------------------------");
                 Serial.println("Connection to Switcher lost...");
                 changeState(STATE_CONNECTING_TO_SWITCHER);
@@ -552,12 +552,13 @@ void handleRoot() {
     html += "</td></tr><tr><td>Gateway: </td><td colspan=\"2\">";
     html += WiFi.gatewayIP().toString();
     html += "</td></tr><tr><td><br></td></tr><tr><td>ATEM switcher status:</td><td colspan=\"2\">";
-    if (atemSwitcher.hasInitialized())
-        html += "Connected - Initialized";
-    else if (atemSwitcher.isRejected())
+    // if (atemSwitcher.hasInitialized())
+    //     html += "Connected - Initialized";
+    // else
+    if (atemSwitcher.isRejected())
         html += "Connection rejected - No empty spot";
     else if (atemSwitcher.isConnected())
-        html += "Connected - Wating for initialization";
+        html += "Connected"; // - Wating for initialization";
     else if (WiFi.status() == WL_CONNECTED)
         html += "Disconnected - No response from switcher";
     else
@@ -660,7 +661,7 @@ void handleRoot() {
     html += settings.switcherIP[2];
     html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[3];
-    html += "\"required/></tr><tr><td><br></td></tr><tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
+    html += "\"required/></tr><tr><td><br></td></tr><tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2022 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
     server.send(200, "text/html", html);
 }
 

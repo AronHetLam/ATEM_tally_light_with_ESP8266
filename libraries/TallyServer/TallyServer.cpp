@@ -45,6 +45,8 @@ TallyServer::TallyServer(int maxClients) {
  * Begin tally server, letting other tally lights connect to it in runLoop()
  */
 void TallyServer::begin() {
+    for(int i = 0; i < _maxClients; i++) _resetClient(&_clients[i]);
+
     _udp.begin(9910);
 }
 
@@ -225,6 +227,7 @@ void TallyServer::runLoop() {
             }
             #endif
         }
+        _udp.flush();
     }
 
     if(_tallyFlagsChanged) { //Send new tally data to clients

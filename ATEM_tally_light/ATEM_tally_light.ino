@@ -134,7 +134,8 @@ struct Settings {
     IPAddress switcherIP;
     uint16_t neopixelsAmount;
     uint8_t neopixelStatusLEDOption;
-    uint8_t NeopixelBrightness;
+    uint8_t neopixelBrightness;
+    uint8_t ledBrightness;
 };
 
 Settings settings;
@@ -199,7 +200,7 @@ void setup() {
         numStatusLEDs = 0;
     }
 
-    FastLED.setBrightness(settings.NeopixelBrightness);
+    FastLED.setBrightness(settings.neopixelBrightness);
     setSTRIP(LED_OFF);
     setStatusLED(LED_BLUE);
     FastLED.show();
@@ -383,6 +384,7 @@ void setLED2(uint8_t color) {
 
 //Set the color of a LED using the given pins
 void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
+#if ESP32
     switch (color) {
         case LED_OFF:
             digitalWrite(pinRed, 0);
@@ -412,11 +414,7 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
         case LED_PINK:
             digitalWrite(pinRed, 1);
             digitalWrite(pinGreen, 0);
-#if ESP32
             digitalWrite(pinBlue, 1);
-#else
-            analogWrite(pinBlue, 0xff);
-#endif
             break;
         case LED_WHITE:
             digitalWrite(pinRed, 1);
@@ -424,6 +422,58 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
             digitalWrite(pinBlue, 1);
             break;
     }
+#else
+    uint8_t ledBrightness = settings.ledBrightness;
+    void (*writeFunc)(uint8_t, uint8_t);
+    if(ledBrightness >= 0xff) {
+        writeFunc = &digitalWrite;
+        ledBrightness = 1;
+    } else {
+        writeFunc = &analogWriteWrapper;
+    }
+
+    switch (color) {
+        case LED_OFF:
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_RED:
+            writeFunc(pinRed, ledBrightness);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_GREEN:
+            digitalWrite(pinRed, 0);
+            writeFunc(pinGreen, ledBrightness);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_BLUE:
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 0);
+            writeFunc(pinBlue, ledBrightness);
+            break;
+        case LED_YELLOW:
+            writeFunc(pinRed, ledBrightness);
+            writeFunc(pinGreen, ledBrightness);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_PINK:
+            writeFunc(pinRed, ledBrightness);
+            digitalWrite(pinGreen, 0);
+            writeFunc(pinBlue, ledBrightness);
+            break;
+        case LED_WHITE:
+            writeFunc(pinRed, ledBrightness);
+            writeFunc(pinGreen, ledBrightness);
+            writeFunc(pinBlue, ledBrightness);
+            break;
+    }
+#endif
+}
+
+void analogWriteWrapper(uint8_t pin, uint8_t value) {
+    analogWrite(pin, value);
 }
 
 //Set the color of the LED strip, except for the status LED
@@ -605,7 +655,9 @@ void handleRoot() {
     html += (String)MODE_ON_AIR + "\"";
     if (settings.tallyModeLED2 == MODE_ON_AIR)
         html += "selected";
-    html += ">On Air</option></select></td></tr><tr><td>Amount of Neopixels:</td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"1000\"name=\"neoPxAmount\"value=\"";
+    html += ">On Air</option></select></td></tr><tr><td> Led brightness: </td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"255\"name=\"ledBright\"value=\"";
+    html += settings.ledBrightness;
+    html += "\"required/></td></tr><tr><td><br></td></tr><tr><td>Amount of Neopixels:</td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"1000\"name=\"neoPxAmount\"value=\"";
     html += settings.neopixelsAmount;
     html += "\"required/></td></tr><tr><td>Neopixel status LED: </td><td><select name=\"neoPxStatus\"><option value=\"";
     html += (String) NEOPIXEL_STATUS_FIRST + "\"";
@@ -620,7 +672,7 @@ void handleRoot() {
     if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_NONE)
         html += "selected";
     html += ">None</option></select></td></tr><tr><td> Neopixel brightness: </td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"255\"name=\"neoPxBright\"value=\"";
-    html += settings.NeopixelBrightness;
+    html += settings.neopixelBrightness;
     html +=  "\"required/></td></tr><tr><td><br></td></tr><tr><td>Network name(SSID): </td><td><input type =\"text\"size=\"30\"maxlength=\"30\"name=\"ssid\"value=\"";
     html += getSSID();
     html += "\"required/></td></tr><tr><td>Network password: </td><td><input type=\"password\"size=\"30\"maxlength=\"30\"name=\"pwd\"pattern=\"^$|.{8,32}\"value=\"";
@@ -684,12 +736,14 @@ void handleSave() {
                 settings.tallyModeLED1 = val.toInt();
             } else if (var == "tModeLED2") {
                 settings.tallyModeLED2 = val.toInt();
+            } else if (var == "ledBright") {
+                settings.ledBrightness = val.toInt();
             } else if (var == "neoPxAmount") {
                 settings.neopixelsAmount = val.toInt();
             } else if (var == "neoPxStatus") {
                 settings.neopixelStatusLEDOption = val.toInt();
             } else if (var == "neoPxBright") {
-                settings.NeopixelBrightness = val.toInt();
+                settings.neopixelBrightness = val.toInt();
             } else if (var == "tNo") {
                 settings.tallyNo = val.toInt() - 1;
             } else if (var == "ssid") {

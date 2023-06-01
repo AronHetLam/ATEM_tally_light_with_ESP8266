@@ -348,13 +348,13 @@ ATEMmin::ATEMmin(){}
 		else 
 			if(!strcmp_P(cmdStr, PSTR("StRS"))) {
 				#if ATEM_debug
-				temp = streaming;
+				temp = streamingStatusFlags;
 				#endif
 				streamingStatusFlags = word(_packetBuffer[0], _packetBuffer[1]);
 				#if ATEM_debug
-				if ((_serialOutput==0x80 && streaming!=temp) || (_serialOutput==0x81 && !hasInitialized()))	{
-					Serial.print(F("sreaming = "));
-					Serial.println(streaming);
+				if ((_serialOutput==0x80 && streamingStatusFlags!=temp) || (_serialOutput==0x81 && !hasInitialized()))	{
+					Serial.print(F("streamingStatusFlags = "));
+					Serial.println(streamingStatusFlags);
 				}
 				#endif
 			}

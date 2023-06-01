@@ -19,7 +19,7 @@
 */
 
 // #define DEBUG_LED_STRIP
-#define FASTLED_ESP8266_DMA
+#define FASTLED_ALLOW_INTERRUPTS 0
 
 //Include libraries:
 #if ESP32
@@ -134,7 +134,8 @@ struct Settings {
     IPAddress switcherIP;
     uint16_t neopixelsAmount;
     uint8_t neopixelStatusLEDOption;
-    uint8_t NeopixelBrightness;
+    uint8_t neopixelBrightness;
+    uint8_t ledBrightness;
 };
 
 Settings settings;
@@ -174,11 +175,8 @@ void setup() {
     Serial.println("########################");
     Serial.println("Serial started");
 
-    //save flash memory from being written too without need.
-    //WiFi.persistent(false);
-
-    //Read settings from EEPROM. Settings struct takes 72 bytes total (according to sizeof()). WIFI settings are stored seperately by the ESP
-    EEPROM.begin(72); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
+    //Read settings from EEPROM. WIFI settings are stored seperately by the ESP
+    EEPROM.begin(sizeof(settings)); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular arduino
     EEPROM.get(0, settings);
 
     //Initialize LED strip
@@ -207,28 +205,26 @@ void setup() {
         numStatusLEDs = 0;
     }
 
-    FastLED.setBrightness(settings.NeopixelBrightness);
+    FastLED.setBrightness(settings.neopixelBrightness);
     setSTRIP(LED_OFF);
     setStatusLED(LED_BLUE);
     FastLED.show();
 
     Serial.println(settings.tallyName);
-    //Serial.println(sizeof(settings)); //Check size of settings struct
 
-    WiFi.persistent(false);
     if (settings.staticIP) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     }
 
     //Put WiFi into station mode and make it connect to saved network
     WiFi.mode(WIFI_STA);
-    WiFi.begin();
 #if ESP32
     WiFi.setHostname(settings.tallyName);
 #else
     WiFi.hostname(settings.tallyName);
 #endif
     WiFi.setAutoReconnect(true);
+    WiFi.begin();
 
     Serial.println("------------------------");
     Serial.println("Connecting to WiFi...");
@@ -264,8 +260,8 @@ void loop() {
             } else if (firstRun) {
                 firstRun = false;
                 Serial.println("Unable to connect. Serving \"Tally Light setup\" WiFi for configuration, while still trying to connect...");
-                WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                 WiFi.softAP("Tally Light setup");
+                WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                 setBothLEDs(LED_WHITE);
                 setStatusLED(LED_WHITE);
             }
@@ -275,14 +271,14 @@ void loop() {
             // Initialize a connection to the switcher:
             if (firstRun) {
                 atemSwitcher.begin(settings.switcherIP);
-                //atemSwitcher.serialOutput(0x80); //Makes Atem library print debug info
+                //atemSwitcher.serialOutput(0xff); //Makes Atem library print debug info
                 Serial.println("------------------------");
                 Serial.println("Connecting to switcher...");
                 Serial.println((String)"Switcher IP:         " + settings.switcherIP[0] + "." + settings.switcherIP[1] + "." + settings.switcherIP[2] + "." + settings.switcherIP[3]);
                 firstRun = false;
             }
             atemSwitcher.runLoop();
-            if (atemSwitcher.hasInitialized()) {
+            if (atemSwitcher.isConnected()) {
                 changeState(STATE_RUNNING);
                 Serial.println("Connected to switcher");
             }
@@ -313,7 +309,7 @@ void loop() {
             // batteryLoop();
 
             //Switch state if ATEM connection is lost...
-            if (!atemSwitcher.hasInitialized()) { // will return false if the connection was lost
+            if (!atemSwitcher.isConnected()) { // will return false if the connection was lost
                 Serial.println("------------------------");
                 Serial.println("Connection to Switcher lost...");
                 changeState(STATE_CONNECTING_TO_SWITCHER);
@@ -408,6 +404,7 @@ void setLED2(uint8_t color) {
 
 //Set the color of a LED using the given pins
 void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
+#if ESP32
     switch (color) {
         case LED_OFF:
             digitalWrite(pinRed, 0);
@@ -437,11 +434,7 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
         case LED_PINK:
             digitalWrite(pinRed, 1);
             digitalWrite(pinGreen, 0);
-#if ESP32
             digitalWrite(pinBlue, 1);
-#else
-            analogWrite(pinBlue, 0xff);
-#endif
             break;
         case LED_WHITE:
             digitalWrite(pinRed, 1);
@@ -449,6 +442,58 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
             digitalWrite(pinBlue, 1);
             break;
     }
+#else
+    uint8_t ledBrightness = settings.ledBrightness;
+    void (*writeFunc)(uint8_t, uint8_t);
+    if(ledBrightness >= 0xff) {
+        writeFunc = &digitalWrite;
+        ledBrightness = 1;
+    } else {
+        writeFunc = &analogWriteWrapper;
+    }
+
+    switch (color) {
+        case LED_OFF:
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_RED:
+            writeFunc(pinRed, ledBrightness);
+            digitalWrite(pinGreen, 0);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_GREEN:
+            digitalWrite(pinRed, 0);
+            writeFunc(pinGreen, ledBrightness);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_BLUE:
+            digitalWrite(pinRed, 0);
+            digitalWrite(pinGreen, 0);
+            writeFunc(pinBlue, ledBrightness);
+            break;
+        case LED_YELLOW:
+            writeFunc(pinRed, ledBrightness);
+            writeFunc(pinGreen, ledBrightness);
+            digitalWrite(pinBlue, 0);
+            break;
+        case LED_PINK:
+            writeFunc(pinRed, ledBrightness);
+            digitalWrite(pinGreen, 0);
+            writeFunc(pinBlue, ledBrightness);
+            break;
+        case LED_WHITE:
+            writeFunc(pinRed, ledBrightness);
+            writeFunc(pinGreen, ledBrightness);
+            writeFunc(pinBlue, ledBrightness);
+            break;
+    }
+#endif
+}
+
+void analogWriteWrapper(uint8_t pin, uint8_t value) {
+    analogWrite(pin, value);
 }
 
 //Set the color of the LED strip, except for the status LED
@@ -577,12 +622,13 @@ void handleRoot() {
     html += "</td></tr><tr><td>Gateway: </td><td colspan=\"2\">";
     html += WiFi.gatewayIP().toString();
     html += "</td></tr><tr><td><br></td></tr><tr><td>ATEM switcher status:</td><td colspan=\"2\">";
-    if (atemSwitcher.hasInitialized())
-        html += "Connected - Initialized";
-    else if (atemSwitcher.isRejected())
+    // if (atemSwitcher.hasInitialized())
+    //     html += "Connected - Initialized";
+    // else
+    if (atemSwitcher.isRejected())
         html += "Connection rejected - No empty spot";
     else if (atemSwitcher.isConnected())
-        html += "Connected - Wating for initialization";
+        html += "Connected"; // - Wating for initialization";
     else if (WiFi.status() == WL_CONNECTED)
         html += "Disconnected - No response from switcher";
     else
@@ -629,7 +675,9 @@ void handleRoot() {
     html += (String)MODE_ON_AIR + "\"";
     if (settings.tallyModeLED2 == MODE_ON_AIR)
         html += "selected";
-    html += ">On Air</option></select></td></tr><tr><td>Amount of Neopixels:</td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"1000\"name=\"neoPxAmount\"value=\"";
+    html += ">On Air</option></select></td></tr><tr><td> Led brightness: </td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"255\"name=\"ledBright\"value=\"";
+    html += settings.ledBrightness;
+    html += "\"required/></td></tr><tr><td><br></td></tr><tr><td>Amount of Neopixels:</td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"1000\"name=\"neoPxAmount\"value=\"";
     html += settings.neopixelsAmount;
     html += "\"required/></td></tr><tr><td>Neopixel status LED: </td><td><select name=\"neoPxStatus\"><option value=\"";
     html += (String) NEOPIXEL_STATUS_FIRST + "\"";
@@ -644,7 +692,7 @@ void handleRoot() {
     if (settings.neopixelStatusLEDOption == NEOPIXEL_STATUS_NONE)
         html += "selected";
     html += ">None</option></select></td></tr><tr><td> Neopixel brightness: </td><td><input type=\"number\"size=\"5\"min=\"0\"max=\"255\"name=\"neoPxBright\"value=\"";
-    html += settings.NeopixelBrightness;
+    html += settings.neopixelBrightness;
     html +=  "\"required/></td></tr><tr><td><br></td></tr><tr><td>Network name(SSID): </td><td><input type =\"text\"size=\"30\"maxlength=\"30\"name=\"ssid\"value=\"";
     html += getSSID();
     html += "\"required/></td></tr><tr><td>Network password: </td><td><input type=\"password\"size=\"30\"maxlength=\"30\"name=\"pwd\"pattern=\"^$|.{8,32}\"value=\"";
@@ -685,7 +733,7 @@ void handleRoot() {
     html += settings.switcherIP[2];
     html += "\"required/>. <input class=\"IP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"aIP4\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.switcherIP[3];
-    html += "\"required/></tr><tr><td><br></td></tr><tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2021 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
+    html += "\"required/></tr><tr><td><br></td></tr><tr><td/><td style=\"float: right;\"><input type=\"submit\"value=\"Save Changes\"/></td></tr></form><tr bgcolor=\"#cccccc\"style=\"font-size: .8em;\"><td colspan=\"3\"><p>&nbsp;&copy; 2020-2022 <a href=\"https://aronhetlam.github.io/\">Aron N. Het Lam</a></p><p>&nbsp;Based on ATEM libraries for Arduino by <a href=\"https://www.skaarhoj.com/\">SKAARHOJ</a></p></td></tr></table></body></html>";
     server.send(200, "text/html", html);
 }
 
@@ -708,12 +756,14 @@ void handleSave() {
                 settings.tallyModeLED1 = val.toInt();
             } else if (var == "tModeLED2") {
                 settings.tallyModeLED2 = val.toInt();
+            } else if (var == "ledBright") {
+                settings.ledBrightness = val.toInt();
             } else if (var == "neoPxAmount") {
                 settings.neopixelsAmount = val.toInt();
             } else if (var == "neoPxStatus") {
                 settings.neopixelStatusLEDOption = val.toInt();
             } else if (var == "neoPxBright") {
-                settings.NeopixelBrightness = val.toInt();
+                settings.neopixelBrightness = val.toInt();
             } else if (var == "tNo") {
                 settings.tallyNo = val.toInt() - 1;
             } else if (var == "ssid") {
@@ -763,14 +813,23 @@ void handleSave() {
 
             server.send(200, "text/html", (String)"<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"font-family:Verdana;color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp;Tally Light setup</h1></td></tr></table><br>Settings saved successfully.</body></html>");
 
-            //Delay to let data be saved, and the responce to be sent properly to the client
-            delay(5000);
+            // Delay to let data be saved, and the response to be sent properly to the client
+            server.close(); // Close server to flush and ensure the response gets to the client
+            delay(100);
 
-            if (ssid && pwd && (ssid != getSSID() || pwd != WiFi.psk())) {
-                WiFi.persistent(true);
-                WiFi.begin(ssid.c_str(), pwd.c_str());
+            // Change into STA mode to disable softAP
+            WiFi.mode(WIFI_STA);
+            delay(100); // Give it time to switch over to STA mode (this is important on the ESP32 at least)
+
+            if (ssid && pwd) {
+                WiFi.persistent(true); // Needed by ESP8266
+                // Pass in 'false' as 5th (connect) argument so we don't waste time trying to connect, just save the new SSID/PSK
+                // 3rd argument is channel - '0' is default. 4th argument is BSSID - 'NULL' is default.
+                WiFi.begin(ssid.c_str(), pwd.c_str(), 0, NULL, false);
             }
 
+            //Delay to apply settings before restart
+            delay(100);
             ESP.restart();
         }
     }

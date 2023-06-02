@@ -11,6 +11,8 @@ It should easily be convertable to use with regular Arduino boards and a WiFi mo
 
 __DIY guide__ is available in the [wiki](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/wiki/DIY-guide). __No coding required!__
 
+[Video](https://www.youtube.com/watch?v=238HlUx3dgI) tutorial available by Josh from [@Budget Church Livestreaming](https://www.youtube.com/@budget-church-livestreaming)
+
 # What does it do?
 Once set up, it will automatically connect to an ATEM switcher over WiFi and function as a tally light or 'On Air' sign.
 

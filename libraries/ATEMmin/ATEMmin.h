@@ -32,7 +32,12 @@ you can keep a clear conscience: http://skaarhoj.com/about/licenses/
 
 #include "Arduino.h"
 #include "ATEMbase.h"
-#include "EthernetUdp.h"
+
+#if defined ESP8266 || defined ESP32
+#include <WifiUDP.h>
+#else
+#include <EthernetUdp.h>
+#endif
 
 
 class ATEMmin : public ATEMbase

@@ -513,7 +513,11 @@ void handleRoot() {
         case WL_DISCONNECTED:
             html += "Station mode disabled";
             break;
+#if ESP32
+        default:
+#else
         case -1:
+#endif
             html += "Timeout";
             break;
     }

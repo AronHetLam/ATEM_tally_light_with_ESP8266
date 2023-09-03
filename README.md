@@ -3,6 +3,8 @@
 [![GitHub release](https://img.shields.io/github/v/release/AronHetLam/ATEM_tally_light_with_ESP8266)](https://github.com/AronHetLam/ATEM_tally_light_with_ESP8266/releases/latest)
 [![License](https://img.shields.io/github/license/AronHetLam/ATEM_tally_light_with_ESP8266)](LICENSE)
 
+<a href="https://www.buymeacoffee.com/aronhetlam" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 Wireless tally light and 'On Air' sign for use with ATEM switchers. Connects over WiFi using only a D1 mini board (ESP8266 WiFi module) and a RGB LED or LED strip. This solution is __not__ limited by the ATEM switchers' connection limit, making it possible to connect as many as you need.
 
 ESP32 is also supported. Depending on your board, you might need to change the pin numbers.

@@ -1,8 +1,8 @@
 /*
-Copyright (C) 2020 Aron N. Het Lam, aronhetlam@gmail.com
+Copyright (C) 2023 Aron N. Het Lam, aronhetlam@gmail.com
 
 This file is a part of the Tally Sever library for use with Kasper Skårhøj's
-(<https://skaarhoj.com>) ATEM clinet libraries for Arduino.
+(<https://skaarhoj.com>) ATEM client libraries for Arduino.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

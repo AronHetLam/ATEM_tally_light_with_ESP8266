@@ -89,6 +89,7 @@ jobs:
         with:
           name: gh-page-mine
           path: ./
-      - uses: actions/upload-pages-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
-          path: ./output/**
+          name: gh-mine
+          path: ./output

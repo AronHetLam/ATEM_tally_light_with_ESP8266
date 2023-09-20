@@ -74,22 +74,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
-      - uses: actions/download-artifact@v3
-        with:
-          path: ./output
-      - run: |
-          pushd ./output &&
-          pwd &&
-          ls &&
-          popd
+      - run: pushd ./output && pwd && ls && popd
       - name: merge manifests
         run: |
           jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&
           jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
       - uses: actions/configure-pages@v3
+      - run: pushd ./output && pwd && ls && popd
       - uses: actions/jekyll-build-pages@v1
         with:
           destination: ./output
+      - run: pushd ./output && pwd && ls && popd
+      - uses: actions/download-artifact@v3
+        with:
+          path: ./output
+      - run: pushd ./output && pwd && ls && popd
       - uses: actions/upload-pages-artifact@v2
         with:
           name: gh-page-mine

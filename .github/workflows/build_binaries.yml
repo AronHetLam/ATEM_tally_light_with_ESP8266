@@ -49,7 +49,9 @@ jobs:
       - name: Cache PlatformIO
         uses: actions/cache@v3
         with:
-          path: ~/.platformio
+          path: | 
+            ~/.platformio
+            ./pio
           key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -59,7 +61,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Build firmware
         env:
-          PLATFORMIO_BUILD_FLAGS: -DPUBLISH
+          PUBLISH: true
         run: pio run -e ${{ matrix.environment }}
       - uses: actions/upload-artifact@v3
         with:
@@ -77,26 +79,18 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: ./output
-      - run: pushd ./output && pwd && ls && popd
+      - uses: actions/configure-pages@v3
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          destination: ./output
+      - uses: actions/download-artifact@v3
+        with:
+          path: ./output/publish
       - name: merge manifests
         run: |
           jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&
           jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
-      - uses: actions/configure-pages@v3
-      - run: pushd ./output && pwd && ls && popd
-      - uses: actions/jekyll-build-pages@v1
-        with:
-          destination: ./output
-      - run: pushd ./output && pwd && ls && popd
-      - uses: actions/download-artifact@v3
-        with:
-          path: ./output
-      - run: pushd ./output && pwd && ls && popd
       - uses: actions/upload-pages-artifact@v2
         with:
           name: gh-page-mine
-          path: ./
-      - uses: actions/upload-artifact@v3
-        with:
-          name: gh-mine
           path: ./output

@@ -80,6 +80,7 @@ jobs:
       - uses: actions/jekyll-build-pages@v1
         with:
           destination: ./output
+      - run: mkdir .output/publish
       - uses: actions/download-artifact@v3
         with:
           path: ./output/publish

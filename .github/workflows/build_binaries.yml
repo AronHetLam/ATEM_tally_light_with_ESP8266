@@ -63,7 +63,7 @@ jobs:
         run: pio run -e ${{ matrix.environment }}
       - uses: actions/upload-artifact@v3
         with:
-          name: publish-${{ matrix.environment }}
+          name: ${{ matrix.environment }}
           path: publish/${{ matrix.environment }}
 
   publish:
@@ -74,6 +74,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
+      - uses: actions/download-artifact@v3
+        with:
+          path: ./output
       - run: pushd ./output && pwd && ls && popd
       - name: merge manifests
         run: |

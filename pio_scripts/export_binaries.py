@@ -39,7 +39,7 @@ def _esp_webtools_manifest(env, chip_family, flash_images):
             "chipFamily": chip_family,
             "parts": [
                 {
-                    "path": "{}{}".format(PUBLISH_DIR_FULL, os.path.basename(image[1])),
+                    "path": "{}{}".format(PIOENV, os.path.basename(image[1])),
                     "offset": int(image[0], 16)
                 } for image in flash_images]
         }]

@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define TALLY_SERVER_DEBUG 0
 
 #if defined ESP8266 || defined ESP32
-#include <WifiUDP.h>
+#include <WiFiUdp.h>
 #else
 #include <EthernetUdp.h>
 #endif

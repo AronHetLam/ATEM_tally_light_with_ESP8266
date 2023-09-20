@@ -50,7 +50,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platform.io') }}
+          key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -74,22 +74,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: gh-pages
-      - run: pwd
       - uses: actions/download-artifact@v3
         with:
           path: ./output
-      - run: pwd
       - name: merge manifests
         run: |
           jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&
           jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
-      - run: pwd
       - uses: actions/configure-pages@v3
-      - run: pwd
       - uses: actions/jekyll-build-pages@v1
         with:
           destination: ./output
-      - run: pwd
       - uses: actions/upload-pages-artifact@v2
         with:
-          path: ./output
+          name: gh-page-mine
+          path: ./
+      - uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./output/**

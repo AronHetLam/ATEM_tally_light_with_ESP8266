@@ -50,7 +50,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platform.io') }}
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -81,13 +81,13 @@ jobs:
         run: |
           jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&
           jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
-      - run: echo "${{ github.workspace }} $GITHUB_WORKSPACE"
+      - run: echo dir
       - uses: actions/configure-pages@v3
-      - run: echo "${{ github.workspace }} $GITHUB_WORKSPACE"
+      - run: dir
       - uses: actions/jekyll-build-pages@v1
         with:
           destination: ./output
-      - run: echo "${{ github.workspace }} $GITHUB_WORKSPACE"
+      - run: echo dir
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./output

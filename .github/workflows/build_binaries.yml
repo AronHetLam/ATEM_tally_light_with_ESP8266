@@ -88,8 +88,8 @@ jobs:
           path: ./output/publish
       - name: merge manifests
         run: |
-          jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&
-          jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
+          jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' ./output/**/manifest.json > ./output/ATEM_tally_light_manifest.json &&
+          jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' ./output/**/manifest.json > ./output/ATEM_tally_test_server_manifest.json
       - uses: actions/upload-pages-artifact@v2
         with:
           name: gh-page-mine

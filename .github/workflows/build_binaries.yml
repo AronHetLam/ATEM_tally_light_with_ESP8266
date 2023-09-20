@@ -39,6 +39,9 @@ jobs:
         environment: ${{ fromJSON(needs.get-envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v4
+      - name: Get latest tag
+        id: latest-tag
+        run: echo tag=$(git describe --tags --abbrev=0) >> $GITHUB_OUTPUT
       - name: Cache pip
         uses: actions/cache@v3
         with:
@@ -62,6 +65,7 @@ jobs:
       - name: Build firmware
         env:
           PUBLISH: true
+          VERSION: ${{ steps.latest-tag.outputs.tag }}
         run: pio run -e ${{ matrix.environment }}
       - uses: actions/upload-artifact@v3
         with:
@@ -77,7 +81,7 @@ jobs:
         with:
           ref: gh-pages
       - uses: actions/configure-pages@v3
-      - run: mkdir -p ./output/publish
+      - run: mkdir -p ./output
       - uses: actions/jekyll-build-pages@v1
         with:
           destination: ./output
@@ -90,5 +94,4 @@ jobs:
           jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' ./output/publish/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
       - uses: actions/upload-pages-artifact@v2
         with:
-          name: gh-page-mine
           path: ./output

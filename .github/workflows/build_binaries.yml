@@ -1,9 +1,9 @@
-on: 
-  push: 
-    # branches: 
-      # - "master"
+on:
+  push:
+    # branches:
+    # - "master"
   workflow_dispatch:
-      
+
 jobs:
   get-envs:
     name: Get environments
@@ -19,7 +19,7 @@ jobs:
             ${{ runner.os }}-pip
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install PlatformIO
         run: pip install platformio
       - name: Get default environments
@@ -28,7 +28,7 @@ jobs:
           echo "environments=$(pio project config --json-output | jq -cr '.[0] | select(.[0] == "platformio")[1][] | select(.[0] == "default_envs")[1]')" >> $GITHUB_OUTPUT
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
-            
+
   build:
     name: build ${{ matrix.environment }}
     needs: get-envs
@@ -54,18 +54,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-            python-version: '3.11'
+          python-version: "3.11"
       - name: Install PlatformIO
         run: pip install -r requirements.txt
       - name: Build firmware
-        env: 
+        env:
           PLATFORMIO_BUILD_FLAGS: -DPUBLISH
         run: pio run -e ${{ matrix.environment }}
       - uses: actions/upload-artifact@v3
         with:
           name: publish-${{ matrix.environment }}
           path: publish/${{ matrix.environment }}
-      
+
   publish:
     name: Publish binaries
     needs: build
@@ -79,15 +79,15 @@ jobs:
           path: ./output
       - name: merge manifests
         run: |
-          jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > output/ATEM_tally_light_manifest.json &&
-          jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > output/ATEM_tally_test_server_manifest.json
-      - run: echo $GITHUB_WORKSPACE
+          jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&
+          jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_test_server_manifest.json
+      - run: echo "${{ github.workspace }} $GITHUB_WORKSPACE"
       - uses: actions/configure-pages@v3
-      - run: echo $GITHUB_WORKSPACE
+      - run: echo "${{ github.workspace }} $GITHUB_WORKSPACE"
       - uses: actions/jekyll-build-pages@v1
         with:
           destination: ./output
-      - run: echo $GITHUB_WORKSPACE
+      - run: echo "${{ github.workspace }} $GITHUB_WORKSPACE"
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./output

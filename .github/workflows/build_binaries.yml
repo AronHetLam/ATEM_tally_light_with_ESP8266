@@ -77,6 +77,11 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: ./output
+      - run: |
+          pushd ./output &&
+          pwd &&
+          ls &&
+          popd
       - name: merge manifests
         run: |
           jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' output/*/manifest.json > ./output/ATEM_tally_light_manifest.json &&

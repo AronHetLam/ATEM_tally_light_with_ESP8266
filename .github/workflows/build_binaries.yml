@@ -39,9 +39,11 @@ jobs:
         environment: ${{ fromJSON(needs.get-envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
       - name: Get latest tag
         id: latest-tag
-        run: echo tag=$(git describe --tags --abbrev=0) >> $GITHUB_OUTPUT
+        run: echo "tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
       - name: Cache pip
         uses: actions/cache@v3
         with:

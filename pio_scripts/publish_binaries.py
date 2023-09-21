@@ -41,7 +41,7 @@ def _esp_webtools_manifest(env, chip_family, flash_parts):
             "chipFamily": chip_family,
             "parts": [
                 {
-                    "path": "{}{}".format(PUBLISH_DIR_FULL, os.path.basename(image[1])),
+                    "path": "{}{}{}".format(PIOENV, os.path.sep, os.path.basename(image[1])),
                     "offset": int(image[0], 16)
                 } for image in flash_parts]
         }]
@@ -56,18 +56,6 @@ def bin_rename_copy(source, target, env):
 
     chip_family = _get_cpp_define_value(env, "CHIP_FAMILY")
     flash_images = env.get("FLASH_EXTRA_IMAGES", [])
-
-    # if (chip_family.startswith("ESP32")):
-    #     # Run esptool to merge images into a single binary
-    #     env.Execute(" ".join(
-    #         [
-    #             "esptool",
-    #             "--chip", BOARD_CONFIG.get("build.mcu", "esp32"),
-    #             "merge_bin",
-    #             "-o", PUBLISH_BIN,
-    #             *env.Flatten(flash_images)
-    #         ]
-    #     ))
 
     # else:  # esp8266
     for image in flash_images:

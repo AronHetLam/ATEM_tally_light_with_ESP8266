@@ -1,7 +1,7 @@
 on:
   push:
-    # branches:
-    # - "master"
+    branches:
+    - "master"
   workflow_dispatch:
 
 jobs:
@@ -39,11 +39,11 @@ jobs:
         environment: ${{ fromJSON(needs.get-envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-tags: true
       - name: Get latest tag
         id: latest-tag
-        run: echo "tag=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+        run: |
+          echo "tag=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/tags" | jq -r '.[0].name')" >> $GITHUB_OUTPUT
+          echo "Latest Tag: $TAG"
       - name: Cache pip
         uses: actions/cache@v3
         with:

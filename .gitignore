@@ -11,3 +11,9 @@ build/
 .vscode/launch.json
 .vscode/ipch
 publish/
+
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor

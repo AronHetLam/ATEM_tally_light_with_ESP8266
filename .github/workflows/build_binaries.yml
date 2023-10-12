@@ -31,9 +31,11 @@ jobs:
           json=$(pio project config --json-output)
           echo "environments=$( echo $json | jq -cr '[.. | arrays | select(.[0] | tostring | startswith("env:")) | .[0][4:]] | unique' )" >> $GITHUB_OUTPUT
           echo "web_flasher_names=$( echo $json | jq -cr '[.. | arrays | select(.[0] == "custom_web_flasher_name") | .[1]] | unique' )" >> $GITHUB_OUTPUT
+          echo "tag=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/tags" | jq -r '.[0].name')" >> $GITHUB_OUTPUT
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
       web_flasher_names: ${{ steps.envs.outputs.web_flasher_names}}
+      tag: ${{ steps.envs.outputs.tag}}
 
   build-binaries:
     name: build ${{ matrix.environment }}
@@ -45,11 +47,6 @@ jobs:
         environment: ${{ fromJSON(needs.get-envs.outputs.environments) }}
     steps:
       - uses: actions/checkout@v4
-      - name: Get latest tag
-        id: latest-tag
-        run: |
-          echo "tag=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/tags" | jq -r '.[0].name')" >> $GITHUB_OUTPUT
-          echo "Latest Tag: $TAG"
       - name: Cache pip
         uses: actions/cache@v3
         with:
@@ -73,8 +70,8 @@ jobs:
       - name: Build firmware
         env:
           PUBLISH: true
-          VERSION: ${{ steps.latest-tag.outputs.tag }}
-          PLATFORMIO_BUILD_FLAGS: -DVERSION='"${{ steps.latest-tag.outputs.tag }}"'
+          VERSION: ${{ needs.get-envs.outputs.tag }}
+          PLATFORMIO_BUILD_FLAGS: -DVERSION='"${{ needs.get-envs.outputs.tag }}"'
         run: pio run -e ${{ matrix.environment }}
       - uses: actions/upload-artifact@v3
         with:

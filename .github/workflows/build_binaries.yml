@@ -85,10 +85,11 @@ jobs:
     name: Build gh pages
     needs: [ get-envs, build-binaries ]
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gh-pages
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: gh-pages
       - name: List environments for gh-pages
         run: |
           mkdir -p ./_data

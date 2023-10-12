@@ -85,12 +85,10 @@ jobs:
     name: Build gh pages
     needs: [ get-envs, build-binaries ]
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./gh-pages
     steps:
       - uses: actions/checkout@v4
       - name: List environments for gh-pages
+        working-directory: ./gh-pages
         run: |
           mkdir -p ./_data
           mkdir -p ./_site
@@ -98,17 +96,19 @@ jobs:
       - uses: actions/configure-pages@v3
       - uses: actions/jekyll-build-pages@v1
         with:
-          destination: ./_site
+          source: ./gh-pages
+          destination: ./gh-pages/_site
       - uses: actions/download-artifact@v3
         with:
-          path: ./_site/publish
+          path: ./gh-pages/_site/publish
       - name: merge manifests
+        working-directory: ./gh-pages
         run: ./merge_manifests.sh
         env:
           NAMES: ${{ needs.get-envs.outputs.web_flasher_names }}
       - uses: actions/upload-pages-artifact@v2
         with:
-          path: ./_site
+          path: ./gh-pages/_site
   
   deploy:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'

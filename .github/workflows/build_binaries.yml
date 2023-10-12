@@ -29,7 +29,7 @@ jobs:
         id: envs
         run: |
           json=$(pio project config --json-output)
-          echo "environments=$( echo $json | jq -cr '.[0] | select(.[0] == "platformio")[1][] | select(.[0] == "default_envs")[1]' )" >> $GITHUB_OUTPUT
+          echo "environments=$( echo $json | jq -cr '[.. | arrays | select(.[0] | tostring | startswith("env:")) | .[0][4:]] | unique' )" >> $GITHUB_OUTPUT
           echo "web_flasher_names=$( echo $json | jq -cr '[.. | arrays | select(.[0] == "custom_web_flasher_name") | .[1]] | unique' )" >> $GITHUB_OUTPUT
     outputs:
       environments: ${{ steps.envs.outputs.environments }}

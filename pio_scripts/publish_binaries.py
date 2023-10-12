@@ -30,18 +30,16 @@ def _create_publish_dir():
         os.mkdir(PUBLISH_DIR_FULL)
 
 
-def _esp_webtools_manifest(env, chip_family, flash_parts):
-    is_test_server = _get_cpp_define_value(
-        env, "TALLY_TEST_SERVER") is not None
+def _esp_webtools_manifest(env, chip_family: str, flash_parts):
     manifest = {
-        "name": "ATEM_tally_test_server" if is_test_server else "ATEM_tally_light",
+        "name": env.GetProjectOption("custom_web_flasher_name"),
         "version": VERSION,
-        "new_install_skip_erase": True,
+        "new_install_prompt_erase": True,
         "builds": [{
-            "chipFamily": chip_family,
+            "chipFamily": chip_family.replace('\\"', ''),
             "parts": [
                 {
-                    "path": "{}{}{}".format(PIOENV, os.path.sep, os.path.basename(image[1])),
+                    "path": "{}/{}".format(PIOENV, os.path.basename(image[1])),
                     "offset": int(image[0], 16)
                 } for image in flash_parts]
         }]
@@ -52,6 +50,7 @@ def _esp_webtools_manifest(env, chip_family, flash_parts):
 
 
 def bin_rename_copy(source, target, env):
+    print(os.getenv("PUBLISH"))
     _create_publish_dir()
 
     chip_family = _get_cpp_define_value(env, "CHIP_FAMILY")
@@ -65,16 +64,6 @@ def bin_rename_copy(source, target, env):
     _esp_webtools_manifest(env, chip_family, flash_images +
                            [(env.get("ESP32_APP_OFFSET", "0x00"), PUBLISH_BIN)])
 
-
 if (os.getenv("PUBLISH") is not None):
     env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_rename_copy])
 
-    env.Replace(
-        UPLOADERFLAGS=[
-            f
-            for f in env.get("UPLOADERFLAGS")
-            if f not in env.Flatten(env.get("FLASH_EXTRA_IMAGES"))
-        ]
-        + ["0x0", PUBLISH_BIN],
-        UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS',
-    )

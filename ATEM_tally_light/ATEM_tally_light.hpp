@@ -19,6 +19,7 @@
 */
 
 #include "Arduino.h"
+#include "Improv_wifi/ImprovWiFiLibrary.h"
 
 //Perform initial setup on power on
 //Handle the change of states in the program
@@ -63,6 +64,9 @@ void handleNotFound();
 
 String getSSID();
 
+void setWiFi(String ssid, String pwd);
+
+// void improvCallback(improv::ImprovCommand d);
 //Commented out for users without batteries - Also timer is not done properly
 //Main loop for things that should work every second
 // void batteryLoop();

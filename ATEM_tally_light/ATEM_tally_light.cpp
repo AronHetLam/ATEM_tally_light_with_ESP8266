@@ -20,13 +20,17 @@
 
 #include "ATEM_tally_light.hpp"
 
+#ifndef VERSION
+#define VERSION "dev"
+#endif
+
 // #define DEBUG_LED_STRIP
 #define FASTLED_ALLOW_INTERRUPTS 0
 
 #ifdef TALLY_TEST_SERVER
-#define DISPLAY_NAME (String)"Tally Test server"
+#define DISPLAY_NAME "Tally Test server"
 #else
-#define DISPLAY_NAME (String)"Tally Light"
+#define DISPLAY_NAME "Tally Light"
 #endif
 
 //Include libraries:
@@ -46,25 +50,49 @@
 
 #if ESP32
 //Define LED1 color pins
+#ifndef PIN_RED1
 #define PIN_RED1   32
+#endif
+#ifndef PIN_GREEN1
 #define PIN_GREEN1 33
+#endif
+#ifndef PIN_BLUE1
 #define PIN_BLUE1  25
+#endif
 
 //Define LED2 color pins
+#ifndef PIN_RED2
 #define PIN_RED2   26
+#endif
+#ifndef PIN_GREEN2
 #define PIN_GREEN2 27
+#endif
+#ifndef PIN_BLUE2
 #define PIN_BLUE2  14
+#endif
 
-#else
+#else // ESP8266
 //Define LED1 color pins
+#ifndef PIN_RED1
 #define PIN_RED1    16 // D0
+#endif
+#ifndef PIN_GREEN1
 #define PIN_GREEN1  4  // D2
+#endif
+#ifndef PIN_BLUE1
 #define PIN_BLUE1   5  // D1
+#endif
 
 //Define LED2 color pins
+#ifndef PIN_RED2
 #define PIN_RED2    2  // D4
+#endif
+#ifndef PIN_GREEN2
 #define PIN_GREEN2  14 // D5
+#endif
+#ifndef PIN_BLUE2
 #define PIN_BLUE2   12 // D6
+#endif
 #endif
 
 //Define LED colors
@@ -102,12 +130,14 @@ CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Lime, CRGB::Blue, CRGB::Yell
 #define NEOPIXEL_STATUS_NONE            3
 
 //FastLED
+#ifndef TALLY_DATA_PIN
 #if ESP32
-#define DATA_PIN    12
+#define TALLY_DATA_PIN    12
 #elif ARDUINO_ESP8266_NODEMCU
-#define DATA_PIN    7
+#define TALLY_DATA_PIN    7
 #else
-#define DATA_PIN    13 // D7
+#define TALLY_DATA_PIN    13 // D7
+#endif
 #endif
 int numTallyLEDs;
 int numStatusLEDs;
@@ -130,6 +160,8 @@ int tallyFlag = TALLY_FLAG_OFF;
 #endif
 
 TallyServer tallyServer;
+
+ImprovWiFi improv(&Serial);
 
 uint8_t state = STATE_STARTING;
 
@@ -154,12 +186,25 @@ Settings settings;
 
 bool firstRun = true;
 
+int bytesAvailable = false;
+uint8_t readByte;
+
 //Commented out for users without batteries
 // long secLoop = 0;
 // int lowLedCount = 0;
 // bool lowLedOn = false;
 // double uBatt = 0;
 // char buffer[3];
+
+void onImprovWiFiErrorCb(ImprovTypes::Error err)
+{
+
+}
+
+void onImprovWiFiConnectedCb(const char *ssid, const char *password)
+{
+
+}
 
 //Perform initial setup on power on
 void setup() {
@@ -173,7 +218,6 @@ void setup() {
     pinMode(PIN_BLUE2, OUTPUT);
 
     setBothLEDs(LED_BLUE);
-
     //Setup current-measuring pin - Commented out for users without batteries
     // pinMode(A0, INPUT);
 
@@ -189,7 +233,7 @@ void setup() {
     //Initialize LED strip
     if (0 < settings.neopixelsAmount && settings.neopixelsAmount <= 1000) {
         leds = new CRGB[settings.neopixelsAmount];
-        FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, settings.neopixelsAmount);
+        FastLED.addLeds<NEOPIXEL, TALLY_DATA_PIN>(leds, settings.neopixelsAmount);
 
         if (settings.neopixelStatusLEDOption != NEOPIXEL_STATUS_NONE) {
             numStatusLEDs = 1;
@@ -219,8 +263,10 @@ void setup() {
 
     Serial.println(settings.tallyName);
 
-    if (settings.staticIP) {
+    if (settings.staticIP && settings.tallyIP != IPADDR_NONE) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
+    } else {
+        settings.staticIP = false;
     }
 
     //Put WiFi into station mode and make it connect to saved network
@@ -245,9 +291,20 @@ void setup() {
 
     tallyServer.begin();
 
+    improv.setDeviceInfo(CHIP_FAMILY, DISPLAY_NAME, VERSION, "Tally Light", "");
+    improv.onImprovError(onImprovWiFiErrorCb);
+    improv.onImprovConnected(onImprovWiFiConnectedCb);
+
     //Wait for result from first attempt to connect - This makes sure it only activates the softAP if it was unable to connect,
     //and not just because it hasn't had the time to do so yet. It's blocking, so don't use it inside loop()
-    WiFi.waitForConnectResult();
+    unsigned long start = millis();
+    while((!WiFi.status() || WiFi.status() >= WL_DISCONNECTED) && (millis() - start) < 10000LU) {
+        bytesAvailable = Serial.available();
+            if(bytesAvailable > 0) {
+                readByte = Serial.read();
+                improv.handleByte(readByte);
+            }
+    }
 
     //Set state to connecting before entering loop
     changeState(STATE_CONNECTING_TO_WIFI);
@@ -258,6 +315,12 @@ void setup() {
 }
 
 void loop() {
+    bytesAvailable = Serial.available();
+    if(bytesAvailable > 0) {
+        readByte = Serial.read();
+        improv.handleByte(readByte);
+    }
+
     switch (state) {
         case STATE_CONNECTING_TO_WIFI:
             if (WiFi.status() == WL_CONNECTED) {
@@ -276,7 +339,7 @@ void loop() {
             } else if (firstRun) {
                 firstRun = false;
                 Serial.println("Unable to connect. Serving \"Tally Light setup\" WiFi for configuration, while still trying to connect...");
-                WiFi.softAP(DISPLAY_NAME + " setup");
+                WiFi.softAP((String)DISPLAY_NAME + " setup");
                 WiFi.mode(WIFI_AP_STA); // Enable softAP to access web interface in case of no WiFi
                 setBothLEDs(LED_WHITE);
                 setStatusLED(LED_WHITE);
@@ -299,11 +362,11 @@ void loop() {
                 Serial.println("Connected to switcher");
             }
             break;
-#endif
+#endif        
 
         case STATE_RUNNING:
 #ifdef TALLY_TEST_SERVER
-            if(Serial.read() == '\r') {
+            if(bytesAvailable && readByte == '\r') {
                 tallyFlag++;
                 tallyFlag %= 4;
                 
@@ -621,7 +684,7 @@ int getLedColor(int tallyMode, int tallyNo) {
 //Serve setup web page to client, by sending HTML with the correct variables
 void handleRoot() {
     String html = "<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width,initial-scale=1.0\"><title>Tally Light setup</title></head><script>function switchIpField(e){console.log(\"switch\");console.log(e);var target=e.srcElement||e.target;var maxLength=parseInt(target.attributes[\"maxlength\"].value,10);var myLength=target.value.length;if(myLength>=maxLength){var next=target.nextElementSibling;if(next!=null){if(next.className.includes(\"IP\")){next.focus();}}}else if(myLength==0){var previous=target.previousElementSibling;if(previous!=null){if(previous.className.includes(\"IP\")){previous.focus();}}}}function ipFieldFocus(e){console.log(\"focus\");console.log(e);var target=e.srcElement||e.target;target.select();}function load(){var containers=document.getElementsByClassName(\"IP\");for(var i=0;i<containers.length;i++){var container=containers[i];container.oninput=switchIpField;container.onfocus=ipFieldFocus;}containers=document.getElementsByClassName(\"tIP\");for(var i=0;i<containers.length;i++){var container=containers[i];container.oninput=switchIpField;container.onfocus=ipFieldFocus;}toggleStaticIPFields();}function toggleStaticIPFields(){var enabled=document.getElementById(\"staticIP\").checked;document.getElementById(\"staticIPHidden\").disabled=enabled;var staticIpFields=document.getElementsByClassName('tIP');for(var i=0;i<staticIpFields.length;i++){staticIpFields[i].disabled=!enabled;}}</script><style>a{color:#0F79E0}</style><body style=\"font-family:Verdana;white-space:nowrap;\"onload=\"load()\"><table cellpadding=\"2\"style=\"width:100%\"><tr bgcolor=\"#777777\"style=\"color:#ffffff;font-size:.8em;\"><td colspan=\"3\"><h1>&nbsp;" +
-    DISPLAY_NAME +
+    (String)DISPLAY_NAME +
     " setup</h1><h2>&nbsp;Status:</h2></td></tr><tr><td><br></td><td></td><td style=\"width:100%;\"></td></tr><tr><td>Connection Status:</td><td colspan=\"2\">";
     switch (WiFi.status()) {
         case WL_CONNECTED:
@@ -660,7 +723,7 @@ void handleRoot() {
     html += "<tr><td>Static IP:</td><td colspan=\"2\">";
     html += settings.staticIP == true ? "True" : "False";
     html += "</td></tr><tr><td>" +
-    DISPLAY_NAME +
+    (String)DISPLAY_NAME +
     " IP:</td><td colspan=\"2\">";
     html += WiFi.localIP().toString();
     html += "</td></tr><tr><td>Subnet mask: </td><td colspan=\"2\">";
@@ -752,7 +815,7 @@ void handleRoot() {
     if (settings.staticIP)
         html += "checked";
     html += "/></td></tr><tr><td>" +
-    DISPLAY_NAME +
+    (String)DISPLAY_NAME +
     " IP: </td><td><input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"tIP1\"pattern=\"\\d{0,3}\"value=\"";
     html += settings.tallyIP[0];
     html += "\"required/>. <input class=\"tIP\"type=\"text\"size=\"3\"maxlength=\"3\"name=\"tIP2\"pattern=\"\\d{0,3}\"value=\"";
@@ -797,7 +860,7 @@ void handleRoot() {
 void handleSave() {
     if (server.method() != HTTP_POST) {
         server.send(405, "text/html", "<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body style=\"font-family:Verdana;\"><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp;" +
-    DISPLAY_NAME +
+    (String)DISPLAY_NAME +
     " setup</h1></td></tr></table><br>Request without posting settings not allowed</body></html>");
     } else {
         String ssid;
@@ -870,7 +933,7 @@ void handleSave() {
             EEPROM.commit();
 
             server.send(200, "text/html", (String)"<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>Tally Light setup</title></head><body><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"font-family:Verdana;color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp;" +
-            DISPLAY_NAME +
+            (String)DISPLAY_NAME +
             " setup</h1></td></tr></table><br>Settings saved successfully.</body></html>");
 
             // Delay to let data be saved, and the response to be sent properly to the client
@@ -898,7 +961,7 @@ void handleSave() {
 //Send 404 to client in case of invalid webpage being requested.
 void handleNotFound() {
     server.send(404, "text/html", "<!DOCTYPE html><html><head><meta charset=\"ASCII\"><meta name=\"viewport\"content=\"width=device-width, initial-scale=1.0\"><title>" +
-    DISPLAY_NAME +
+    (String)DISPLAY_NAME +
     " setup</title></head><body style=\"font-family:Verdana;\"><table bgcolor=\"#777777\"border=\"0\"width=\"100%\"cellpadding=\"1\"style=\"color:#ffffff;font-size:.8em;\"><tr><td><h1>&nbsp Tally Light setup</h1></td></tr></table><br>404 - Page not found</body></html>");
 }
 

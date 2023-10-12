@@ -2,6 +2,9 @@ on:
   push:
     branches:
     - "master"
+  pull_request: 
+    branches: 
+    - "master"
   workflow_dispatch:
 
 jobs:
@@ -25,9 +28,12 @@ jobs:
       - name: Get default environments
         id: envs
         run: |
-          echo "environments=$(pio project config --json-output | jq -cr '.[0] | select(.[0] == "platformio")[1][] | select(.[0] == "default_envs")[1]')" >> $GITHUB_OUTPUT
+          json=$(pio project config --json-output)
+          echo "environments=$( echo $json | jq -cr '.[0] | select(.[0] == "platformio")[1][] | select(.[0] == "default_envs")[1]' )" >> $GITHUB_OUTPUT
+          echo "web_flasher_names=$( echo $json | jq -cr '[.. | arrays | select(.[0] == "custom_web_flasher_name") | .[1]] | unique' )" >> $GITHUB_OUTPUT
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
+      web_flasher_names: ${{ steps.envs.outputs.web_flasher_names}}
 
   build-binaries:
     name: build ${{ matrix.environment }}
@@ -42,7 +48,7 @@ jobs:
       - name: Get latest tag
         id: latest-tag
         run: |
-          echo "tag=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/tags" | jq -r '.[0].name')" >> $GITHUB_OUTPUT
+          echo "tag=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/tags" | jq -r '.[0].name')" >> $GITHUB_OUTPUT
           echo "Latest Tag: $TAG"
       - name: Cache pip
         uses: actions/cache@v3
@@ -68,6 +74,7 @@ jobs:
         env:
           PUBLISH: true
           VERSION: ${{ steps.latest-tag.outputs.tag }}
+          PLATFORMIO_BUILD_FLAGS: -DVERSION='"${{ steps.latest-tag.outputs.tag }}"'
         run: pio run -e ${{ matrix.environment }}
       - uses: actions/upload-artifact@v3
         with:
@@ -76,29 +83,33 @@ jobs:
 
   build-gh-pages:
     name: Build gh pages
-    needs: build-binaries
+    needs: [ get-envs, build-binaries ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: gh-pages
+      - name: List environments for gh-pages
+        run: |
+          cd ./gh-pages
+          mkdir -p ./_data
+          mkdir -p ./_site
+          echo '${{ needs.get-envs.outputs.web_flasher_names }}' | jq '[.[] | {name: ., path: ("publish/" + sub("(\\s)"; "_"; "g") + "_manifest.json")}]' > ./_data/manifests.json
       - uses: actions/configure-pages@v3
-      - run: mkdir -p ./output
       - uses: actions/jekyll-build-pages@v1
         with:
-          destination: ./output
+          destination: ./_site
       - uses: actions/download-artifact@v3
         with:
-          path: ./output/publish
+          path: ./_site/publish
       - name: merge manifests
-        run: |
-          jq -s '[.[] | select(.name == "ATEM_tally_light")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' ./output/publish/*/manifest.json > ./output/publish/ATEM_tally_light_manifest.json &&
-          jq -s '[.[] | select(.name == "ATEM_tally_test_server")] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' ./output/publish/*/manifest.json > ./output/publish/ATEM_tally_test_server_manifest.json
+        run: ./merge_manifests.sh
+        env:
+          NAMES: ${{ needs.get-envs.outputs.web_flasher_names }}
       - uses: actions/upload-pages-artifact@v2
         with:
-          path: ./output
+          path: ./_site
   
   deploy:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: build-gh-pages
     permissions: 

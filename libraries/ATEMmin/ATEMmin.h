@@ -34,7 +34,7 @@ you can keep a clear conscience: http://skaarhoj.com/about/licenses/
 #include "ATEMbase.h"
 
 #if defined ESP8266 || defined ESP32
-#include <WifiUDP.h>
+#include <WiFiUdp.h>
 #else
 #include <EthernetUdp.h>
 #endif

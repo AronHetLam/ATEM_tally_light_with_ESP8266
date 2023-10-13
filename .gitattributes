@@ -7,6 +7,7 @@
 *.cpp   text
 *.html  text
 *.md    text
+*.yml   text
 LICENSE text
 
 *.jpg   binary

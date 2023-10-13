@@ -1,8 +1,8 @@
 /*
-Copyright (C) 2020 Aron N. Het Lam, aronhetlam@gmail.com
+Copyright (C) 2023 Aron N. Het Lam, aronhetlam@gmail.com
 
 This file is a part of the Tally Sever library for use with Kasper Skårhøj's
-(<https://skaarhoj.com>) ATEM clinet libraries for Arduino.
+(<https://skaarhoj.com>) ATEM client libraries for Arduino.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define TALLY_SERVER_DEBUG 0
 
 #if defined ESP8266 || defined ESP32
-#include <WifiUDP.h>
+#include <WiFiUdp.h>
 #else
 #include <EthernetUdp.h>
 #endif

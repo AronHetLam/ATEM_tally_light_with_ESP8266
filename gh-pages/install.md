@@ -67,8 +67,8 @@ select {
 
 <p>
 <select id="manifests">
-{% for member in site.data.manifests %}
-  <option value="{{ member.path }}">{{ member.name }}</option>
+{% for manifest in site.data.manifests %}
+  <option value="{{ manifest.path }}">{{ manifest.name }}</option>
 {% endfor %}
 </select>
 </p>

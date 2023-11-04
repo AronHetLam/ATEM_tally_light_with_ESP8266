@@ -19,7 +19,7 @@
 */
 
 #include "Arduino.h"
-#include "Improv_wifi/ImprovWiFiLibrary.h"
+#include "ImprovWiFiLibrary.h"
 
 //Perform initial setup on power on
 //Handle the change of states in the program

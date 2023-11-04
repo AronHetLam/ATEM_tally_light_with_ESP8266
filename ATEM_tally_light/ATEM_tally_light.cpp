@@ -27,6 +27,14 @@
 // #define DEBUG_LED_STRIP
 #define FASTLED_ALLOW_INTERRUPTS 0
 
+#ifndef CHIP_FAMILY
+#define CHIP_FAMILY "Unknown"
+#endif
+
+#ifndef VERSION
+#define VERSION "Unknown"
+#endif
+
 #ifdef TALLY_TEST_SERVER
 #define DISPLAY_NAME "Tally Test server"
 #else

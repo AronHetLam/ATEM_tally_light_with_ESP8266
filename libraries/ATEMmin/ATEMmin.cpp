@@ -345,7 +345,7 @@ ATEMmin::ATEMmin(){}
 			 * Added by Aron N. Het Lam
 			 * Functionality to parse and retrieve streaming status.
 			 */
-		else 
+			else 
 			if(!strcmp_P(cmdStr, PSTR("StRS"))) {
 				#if ATEM_debug
 				temp = streamingStatusFlags;
@@ -355,6 +355,18 @@ ATEMmin::ATEMmin(){}
 				if ((_serialOutput==0x80 && streamingStatusFlags!=temp) || (_serialOutput==0x81 && !hasInitialized()))	{
 					Serial.print(F("streamingStatusFlags = "));
 					Serial.println(streamingStatusFlags);
+				}
+				#endif
+			} else 
+			if(!strcmp_P(cmdStr, PSTR("RTMS"))) {
+				#if ATEM_debug
+				temp = recordingStatusFlags;
+				#endif
+				streamingStatusFlags = word(_packetBuffer[0], _packetBuffer[1]);
+				#if ATEM_debug
+				if ((_serialOutput==0x80 && recordingStatusFlags!=temp) || (_serialOutput==0x81 && !hasInitialized()))	{
+					Serial.print(F("streamingStatusFlags = "));
+					Serial.println(recordingStatusFlags);
 				}
 				#endif
 			}
@@ -697,3 +709,58 @@ ATEMmin::ATEMmin(){}
 			bool ATEMmin::getStreamUnknownError() {
 				return streamingStatusFlags & 1 << 15;
 			}
+			
+			/**
+			 * Get raw recording status flags 
+			 */
+			uint16_t ATEMmin::getRecordingStatusFlags() { return recordingStatusFlags; }
+			
+			/**
+			 * Get recording status idle flag
+			 */
+			bool ATEMmin::getRecordingIdle() { return recordingStatusFlags == 0; }
+
+			/**
+			 * Get recording status is recording flag
+			 */
+			bool ATEMmin::getRecordingRecording() { return recordingStatusFlags & 1 << 0; }
+			
+			/**
+			 * Get recording status is stopping flag
+			 */
+			bool ATEMmin::getRecordingStopping() { return recordingStatusFlags & 1 << 7; }
+			
+			/**
+			 * Get recording status error none flag 
+			 */
+			bool ATEMmin::getRecordingErrorNone() { return recordingStatusFlags & 1 << 1;  }
+			
+			/**
+			 * Get recording status error no media flag
+			 */
+			bool ATEMmin::getRecordingNoMedial() { return recordingStatusFlags == 0;  }
+			
+			/**
+			 * Get recording status error media full flag
+			 */
+			bool ATEMmin::getRecordingMediaFull() { return recordingStatusFlags & 1 << 2;  }
+			
+			/**
+			 * Get recording status media error flag
+			 */
+			bool ATEMmin::getRecordingMediaError() { return recordingStatusFlags & 1 << 3;  }
+			
+			/**
+			 * Get recording status media unformatted flag
+			 */
+			bool ATEMmin::getRecordingMediaUnformatted() { return recordingStatusFlags & 1 << 4;  }
+			
+			/**
+			 * Get recording status error dropping frames flag
+			 */
+			bool ATEMmin::getRecordingDroppingFrames() { return recordingStatusFlags & 1 << 5;  }
+			
+			/**
+			 * Get recording status unknown error flag 
+			 */
+			bool ATEMmin::getRecordingUnknownError() { return recordingStatusFlags & 1 << 15;  }

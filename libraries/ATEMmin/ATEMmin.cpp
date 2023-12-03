@@ -365,7 +365,7 @@ ATEMmin::ATEMmin(){}
 				recordingStatusFlags = word(_packetBuffer[0], _packetBuffer[1]);
 				#if ATEM_debug
 				if ((_serialOutput==0x80 && recordingStatusFlags!=temp) || (_serialOutput==0x81 && !hasInitialized()))	{
-					Serial.print(F("streamingStatusFlags = "));
+					Serial.print(F("recordingStatusFlags = "));
 					Serial.println(recordingStatusFlags);
 				}
 				#endif

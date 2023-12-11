@@ -20,7 +20,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install PlatformIO
@@ -62,7 +62,7 @@ jobs:
             ./pio
           key: ${{ runner.os }}-pio-${{ matrix.environment }}-${{ hashFiles('**/platformio.ini') }}
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install PlatformIO

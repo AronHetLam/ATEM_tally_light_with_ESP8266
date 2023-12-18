@@ -73,7 +73,7 @@ jobs:
           VERSION: ${{ needs.get-envs.outputs.tag }}
           PLATFORMIO_BUILD_FLAGS: -DVERSION='"${{ needs.get-envs.outputs.tag }}"'
         run: pio run -e ${{ matrix.environment }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.environment }}
           path: publish/${{ matrix.environment }}

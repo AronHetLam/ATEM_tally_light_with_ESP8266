@@ -95,7 +95,7 @@ jobs:
         with:
           source: ./gh-pages
           destination: ./gh-pages/_site
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ./gh-pages/_site/publish
       - name: merge manifests

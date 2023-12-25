@@ -105,7 +105,7 @@ jobs:
             sanitized_name=$(echo \"$name\" | jq -r 'sub("(\\s)"; "_"; "g")')
             jq -s --arg name "$name" '[.[] | select(.name == $name)] | (.[0] | with_entries(select(.key != "builds"))) + {builds: map(.builds) | add}' ./_site/publish/*/manifest.json > ./_site/publish/${sanitized_name}_manifest.json
           done
-      - uses: actions/upload-pages-artifact@v2
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: ./gh-pages/_site
   

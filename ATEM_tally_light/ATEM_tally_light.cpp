@@ -409,17 +409,6 @@ void loop() {
             for (int i = 0; i < tallySources; i++) {
                 tallyServer.setTallyFlag(i, atemSwitcher.getTallyByIndexTallyFlags(i));
             }
-
-            //Switch state if ATEM connection is lost...
-            if (!atemSwitcher.isConnected()) { // will return false if the connection was lost
-                Serial.println("------------------------");
-                Serial.println("Connection to Switcher lost...");
-                changeState(STATE_CONNECTING_TO_SWITCHER);
-
-                //Reset tally server's tally flags, so clients turn off their lights.
-                tallyServer.resetTallyFlags();
-            }
-        
 #endif
 
             //Handle Tally Server
@@ -432,6 +421,18 @@ void loop() {
 
             color = getLedColor(settings.tallyModeLED2, settings.tallyNo);
             setLED2(color);
+
+#ifndef TALLY_TEST_SERVER
+            //Switch state if ATEM connection is lost...
+            if (!atemSwitcher.isConnected()) { // will return false if the connection was lost
+                Serial.println("------------------------");
+                Serial.println("Connection to Switcher lost...");
+                changeState(STATE_CONNECTING_TO_SWITCHER);
+
+                //Reset tally server's tally flags, so clients turn off their lights.
+                tallyServer.resetTallyFlags();
+            }
+#endif
 
             //Commented out for userst without batteries - Also timer is not done properly
             // batteryLoop();

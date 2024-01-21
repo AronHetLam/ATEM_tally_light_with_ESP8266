@@ -6,6 +6,11 @@ on:
     branches: 
     - "master"
   workflow_dispatch:
+    inputs:
+      deploy-pages:
+        type: boolean
+        description: Deploy pages
+        default: false
 
 jobs:
   get-envs:
@@ -110,7 +115,7 @@ jobs:
           path: ./gh-pages/_site
   
   deploy:
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/master' && github.event_name == 'push') || github.event.inputs.deploy-pages == 'true'
     runs-on: ubuntu-latest
     needs: build-gh-pages
     permissions: 

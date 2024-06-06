@@ -95,7 +95,7 @@ jobs:
           mkdir -p ./_data
           mkdir -p ./_site
           echo '${{ needs.get-envs.outputs.web_flasher_names }}' | jq '[.[] | {name: ., path: ("publish/" + sub("(\\s)"; "_"; "g") + "_manifest.json")}]' > ./_data/manifests.json
-      - uses: actions/configure-pages@v4
+      - uses: actions/configure-pages@v5
       - uses: actions/jekyll-build-pages@v1
         with:
           source: ./gh-pages

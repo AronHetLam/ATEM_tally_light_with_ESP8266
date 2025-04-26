@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #define TALLY_TEST_SERVER
 
-#include "ATEM_tally_light.hpp"
+#include "../ATEM_tally_light/ATEM_tally_light.hpp"
 
 /*
     Where did all the code go?!

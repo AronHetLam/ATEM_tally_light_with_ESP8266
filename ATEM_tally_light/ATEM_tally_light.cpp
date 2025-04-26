@@ -42,7 +42,7 @@
 #endif
 
 //Include libraries:
-#if ESP32
+#ifdef ESP32
 #include <esp_wifi.h>
 #include <WebServer.h>
 #include <WiFi.h>
@@ -56,7 +56,7 @@
 #include <TallyServer.h>
 #include <FastLED.h>
 
-#if ESP32
+#ifdef ESP32
 //Define LED1 color pins
 #ifndef PIN_RED1
 #define PIN_RED1   32
@@ -139,7 +139,7 @@ CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Lime, CRGB::Blue, CRGB::Yell
 
 //FastLED
 #ifndef TALLY_DATA_PIN
-#if ESP32
+#ifdef ESP32
 #define TALLY_DATA_PIN    12
 #elif ARDUINO_ESP8266_NODEMCU
 #define TALLY_DATA_PIN    7
@@ -155,7 +155,7 @@ CRGB *statusLED;
 bool neopixelsUpdated = false;
 
 //Initialize global variables
-#if ESP32
+#ifdef ESP32
 WebServer server(80);
 #else
 ESP8266WebServer server(80);
@@ -271,7 +271,7 @@ void setup() {
 
     Serial.println(settings.tallyName);
 
-    if (settings.staticIP && settings.tallyIP != IPADDR_NONE) {
+    if (settings.staticIP && settings.tallyIP != IPAddress(255, 255, 255, 255)) {
         WiFi.config(settings.tallyIP, settings.tallyGateway, settings.tallySubnetMask);
     } else {
         settings.staticIP = false;
@@ -279,7 +279,7 @@ void setup() {
 
     //Put WiFi into station mode and make it connect to saved network
     WiFi.mode(WIFI_STA);
-#if ESP32
+#ifdef ESP32
     WiFi.setHostname(settings.tallyName);
 #else
     WiFi.hostname(settings.tallyName);
@@ -510,7 +510,7 @@ void setLED2(uint8_t color) {
 
 //Set the color of a LED using the given pins
 void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
-#if ESP32
+#ifdef ESP32
     switch (color) {
         case LED_OFF:
             digitalWrite(pinRed, 0);
@@ -711,7 +711,7 @@ void handleRoot() {
         case WL_DISCONNECTED:
             html += "Station mode disabled";
             break;
-#if ESP32
+#ifdef ESP32
         default:
 #else
         case -1:
@@ -758,7 +758,7 @@ void handleRoot() {
     html += "</td></tr><tr><td><br></td></tr>";
 #endif
     html += "<tr bgcolor=\"#777777\"style=\"color:#ffffff;font-size:.8em;\"><td colspan=\"3\"><h2>&nbsp;Settings:</h2></td></tr><tr><td><br></td></tr><form action=\"/save\"method=\"post\"><tr><td>Tally Light name: </td><td><input type=\"text\"size=\"30\"maxlength=\"30\"name=\"tName\"value=\"";
-#if ESP32
+#ifdef ESP32
     html += WiFi.getHostname();
 #else
     html += WiFi.hostname();
@@ -975,7 +975,7 @@ void handleNotFound() {
 }
 
 String getSSID() {
-#if ESP32
+#ifdef ESP32
     wifi_config_t conf;
     esp_wifi_get_config(WIFI_IF_STA, &conf);
     return String(reinterpret_cast<const char *>(conf.sta.ssid));

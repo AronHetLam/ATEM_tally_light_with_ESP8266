@@ -1,7 +1,7 @@
 ---
 title: Web installer
 ---
-<script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+<script type="module" src="https://unpkg.com/esp-web-tools@10.1/dist/web/install-button.js?module"></script>
 <style>
 .install-button, select {
   background-color: #2f80ed;

@@ -238,6 +238,12 @@ void setup() {
     EEPROM.begin(sizeof(settings)); //Needed on ESP8266 module, as EEPROM lib works a bit differently than on a regular Arduino
     EEPROM.get(0, settings);
 
+    //Ugly fix for IPAddress not loading correctly when read from EEPROM
+    settings.tallyIP = IPAddress(settings.tallyIP[0], settings.tallyIP[1], settings.tallyIP[2], settings.tallyIP[3]);
+    settings.tallySubnetMask = IPAddress(settings.tallySubnetMask[0], settings.tallySubnetMask[1], settings.tallySubnetMask[2], settings.tallySubnetMask[3]);
+    settings.tallyGateway = IPAddress(settings.tallyGateway[0], settings.tallyGateway[1], settings.tallyGateway[2], settings.tallyGateway[3]);
+    settings.switcherIP = IPAddress(settings.switcherIP[0], settings.switcherIP[1], settings.switcherIP[2], settings.switcherIP[3]);
+
     //Initialize LED strip
     if (0 < settings.neopixelsAmount && settings.neopixelsAmount <= 1000) {
         leds = new CRGB[settings.neopixelsAmount];

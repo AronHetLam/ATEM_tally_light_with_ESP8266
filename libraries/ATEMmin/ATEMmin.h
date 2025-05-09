@@ -85,6 +85,7 @@ private:
 			uint16_t atemTallyByIndexSources;
 			uint8_t atemTallyByIndexTallyFlags[41];
 			uint16_t streamingStatusFlags; //Added by Aron N. Het Lam
+			uint16_t recordingStatusFlags; //Added by Aron N. Het Lam
 
 public:
 			// Public Methods in ATEM.h:
@@ -123,6 +124,17 @@ public:
 			bool getStreamInvalidState();
 			bool getStreamStopping();
 			bool getStreamUnknownError();
+			uint16_t getRecordingStatusFlags();
+			bool getRecordingIdle();
+			bool getRecordingRecording();
+			bool getRecordingStopping();
+			bool getRecordingErrorNone();
+			bool getRecordingNoMedial();
+			bool getRecordingMediaFull();
+			bool getRecordingMediaError();
+			bool getRecordingMediaUnformatted();
+			bool getRecordingDroppingFrames();
+			bool getRecordingUnknownError();
 };
 
 #endif

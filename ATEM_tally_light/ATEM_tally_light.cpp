@@ -364,7 +364,7 @@ void loop() {
             // Initialize a connection to the switcher:
             if (firstRun) {
                 atemSwitcher.begin(settings.switcherIP);
-                //atemSwitcher.serialOutput(0xff); //Makes Atem library print debug info
+                //atemSwitcher.serialOutput(0x80); //Makes Atem library print debug info
                 Serial.println("------------------------");
                 Serial.println("Connecting to switcher...");
                 Serial.println((String)"Switcher IP:         " + settings.switcherIP[0] + "." + settings.switcherIP[1] + "." + settings.switcherIP[2] + "." + settings.switcherIP[3]);

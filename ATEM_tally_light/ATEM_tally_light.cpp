@@ -56,6 +56,10 @@
 #include <TallyServer.h>
 #include <FastLED.h>
 
+#ifdef M5STICKC_DISPLAY
+#include <M5Unified.h>
+#endif
+
 #ifdef ESP32
 //Define LED1 color pins
 #ifndef PIN_RED1
@@ -274,6 +278,14 @@ void setup() {
     setSTRIP(LED_OFF);
     setStatusLED(LED_BLUE);
     FastLED.show();
+
+#ifdef M5STICKC_DISPLAY
+    // Initialize M5StickC display
+    auto cfg = M5.config();
+    M5.begin(cfg);
+    M5.Display.setRotation(1); // Landscape mode
+    M5.Display.fillScreen(TFT_BLACK); // Start with black screen
+#endif
 
     Serial.println(settings.tallyName);
 
@@ -502,11 +514,17 @@ void changeState(uint8_t stateToChangeTo) {
 void setBothLEDs(uint8_t color) {
     setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
     setLED(color, PIN_RED2, PIN_GREEN2, PIN_BLUE2);
+#ifdef M5STICKC_DISPLAY
+    updateM5Display(color);
+#endif
 }
 
 //Set the color of the 1st LED
 void setLED1(uint8_t color) {
     setLED(color, PIN_RED1, PIN_GREEN1, PIN_BLUE1);
+#ifdef M5STICKC_DISPLAY
+    updateM5Display(color);
+#endif
 }
 
 //Set the color of the 2nd LED
@@ -607,6 +625,43 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue) {
 void analogWriteWrapper(uint8_t pin, uint8_t value) {
     analogWrite(pin, value);
 }
+
+#ifdef M5STICKC_DISPLAY
+//Update M5StickC display to match LED1 color
+void updateM5Display(uint8_t color) {
+    uint32_t displayColor;
+    switch (color) {
+        case LED_OFF:
+            displayColor = TFT_BLACK;
+            break;
+        case LED_RED:
+            displayColor = TFT_RED;
+            break;
+        case LED_GREEN:
+            displayColor = TFT_GREEN;
+            break;
+        case LED_BLUE:
+            displayColor = TFT_BLUE;
+            break;
+        case LED_YELLOW:
+            displayColor = TFT_YELLOW;
+            break;
+        case LED_PINK:
+            displayColor = TFT_MAGENTA;
+            break;
+        case LED_WHITE:
+            displayColor = TFT_WHITE;
+            break;
+        case LED_ORANGE:
+            displayColor = TFT_ORANGE;
+            break;
+        default:
+            displayColor = TFT_BLACK;
+            break;
+    }
+    M5.Display.fillScreen(displayColor);
+}
+#endif
 
 //Set the color of the LED strip, except for the status LED
 void setSTRIP(uint8_t color) {

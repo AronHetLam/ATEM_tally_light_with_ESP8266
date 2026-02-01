@@ -120,6 +120,11 @@
 //Map "old" LED colors to CRGB colors
 CRGB color_led[8] = { CRGB::Black, CRGB::Red, CRGB::Lime, CRGB::Blue, CRGB::Yellow, CRGB::Fuchsia, CRGB::White, CRGB::Orange };
 
+#ifdef M5STICKC_DISPLAY
+// Cache the last displayed color to avoid unnecessary screen redraws
+uint8_t lastDisplayColor = 0xFF; // Initialize to invalid value to force first update
+#endif
+
 //Define states
 #define STATE_STARTING                  0
 #define STATE_CONNECTING_TO_WIFI        1
@@ -629,6 +634,12 @@ void analogWriteWrapper(uint8_t pin, uint8_t value) {
 #ifdef M5STICKC_DISPLAY
 //Update M5StickC display to match LED1 color
 void updateM5Display(uint8_t color) {
+    // Only update display if color has changed to reduce unnecessary redraws
+    if (color == lastDisplayColor) {
+        return;
+    }
+    lastDisplayColor = color;
+    
     uint32_t displayColor;
     switch (color) {
         case LED_OFF:

@@ -39,6 +39,11 @@ void setLED(uint8_t color, int pinRed, int pinGreen, int pinBlue);
 
 void analogWriteWrapper(uint8_t pin, uint8_t value);
 
+#ifdef M5STICKC_DISPLAY
+//Update M5StickC display to match LED color
+void updateM5Display(uint8_t color);
+#endif
+
 //Set the color of the LED strip, except for the status LED
 void setSTRIP(uint8_t color);
 
